@@ -5,4 +5,5 @@ pyarrow>=17.0
 pandas>=2.0
 python-dateutil>=2.8
 matplotlib>=3.8
+plotly>=5.20
 pytest>=8.0.0

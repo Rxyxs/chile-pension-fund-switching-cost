@@ -6,35 +6,44 @@
 
 What does it actually cost a Chilean saver to panic-switch pension funds during a crash? This project answers that with **real daily data** from the Superintendencia de Pensiones (2002-2026, ~278,000 rows), not a simulated market.
 
-## The real data
+**If you're new to the Chilean pension system**: every worker's mandatory retirement savings sit in one of 5 "multifondos" (funds A through E) managed by a pension fund administrator (an AFP). Fondo A invests up to 80% in stocks — higher expected return, bigger swings. Fondo E invests almost entirely in bonds — lower expected return, much smaller swings. Savers are allowed to switch funds whenever they want, and the popular move during a crash is to flee from A (or B/C) into the "safer" E — this project measures whether that instinct actually pays off.
 
-The Superintendencia de Pensiones publishes the daily `valor cuota` (unit price) and `valor patrimonio` (AUM) of every AFP, for each of the 5 multifondos (A = most equity-heavy, E = most conservative), going back to 2002. It's not exposed as a clean API — it's a `.php` export endpoint behind a form (`spensiones.cl/apps/valoresCuotaFondo/`) that returns a semicolon-delimited text file. `etl/fetch_valor_cuota.py` reproduces that request in plain Python (no browser, no auth needed).
+## The real data — and what "patrimonio-weighted" means
 
-**A real data-quality trap this project had to solve**: the header row (which AFPs are in which column) *changes* every time an AFP enters, exits, or merges — 31 times in Fondo C's file alone, spanning real events like Provida's AFPs consolidating, AFP Modelo's 2010 launch, and AFP Uno's 2019 launch. A naive single-header CSV read would silently misalign columns after the first change and mix one AFP's numbers into another's. `etl/parse_valor_cuota.py` re-anchors column positions every time the header repeats — tested in `tests/test_parse_valor_cuota.py` against a synthetic file that changes header mid-stream.
+The Superintendencia de Pensiones publishes two numbers every business day, for every AFP, for each of the 5 fund types:
 
-Each AFP's unit price is its own independent series (rebased to CLP 10,000 whenever a fund launches), so raw prices aren't comparable across AFPs. `etl/build_duckdb.py` computes each AFP's daily return, weights it by that AFP's prior-day AUM, and compounds the weighted-average return into one patrimonio-weighted index per fund type — the standard way to build a benchmark index from constituent price series.
+- **`valor cuota`** (unit price): think of each fund as being divided into millions of tiny "shares." This is the price of one share that day. It only tells you the *return* of that AFP's fund — you can't compare the raw number between two AFPs, because each one starts its own share price at CLP 10,000 whenever the fund is created.
+- **`valor patrimonio`** (total assets under management): how much money, in total, that AFP's fund holds that day.
+
+This data isn't exposed as a clean API — it's a `.php` export endpoint behind a form on `spensiones.cl/apps/valoresCuotaFondo/` that returns a semicolon-delimited text file. `etl/fetch_valor_cuota.py` reproduces that request in plain Python (no browser, no login needed — anyone can run it).
+
+**A real data-quality trap this project had to solve**: the header row (which AFP sits in which column) *changes* every time an AFP enters, exits, or merges with another — 31 times in Fondo C's file alone, spanning real events like Provida's AFPs consolidating, AFP Modelo's 2010 launch, and AFP Uno's 2019 launch. If you read this file with a single fixed header (the obvious first approach), everything after the first change silently shifts — you'd end up attributing one AFP's numbers to a different AFP's name, and never know it happened. `etl/parse_valor_cuota.py` re-reads the header every time it repeats and re-anchors which column belongs to which AFP from there — this exact scenario is what `tests/test_parse_valor_cuota.py` checks with a small synthetic file built to change its header mid-stream.
+
+**Why "patrimonio-weighted"?** Since each AFP's `valor cuota` is its own independent series, you can't just average the raw prices across AFPs to get "the return of Fondo A" — averaging prices from series that started at different points and grew independently produces a meaningless number. What you *can* do is: compute each AFP's own daily percentage return, then average those returns across AFPs, weighting each one by how much money (`valor patrimonio`) it actually held the day before. That weighting matters — imagine AFP X (managing CLP 9 billion) returns -10% one day, and tiny AFP Y (CLP 1 billion) returns +10% the same day; a simple average of the two returns would say "0%," but that's not what actually happened to the system's money — 90% of the pesos in the system lost 10% that day. `etl/build_duckdb.py` does this weighting, then compounds the resulting daily returns into one index per fund type (starting at 100), which is the standard way index providers (like the ones behind the IPSA or S&P 500) build a benchmark out of many underlying constituents.
 
 ## Sanity-checking the index against known history
 
-Before trusting the index for any analysis, I checked it against two crashes everyone in Chile's pension system remembers:
+Before trusting a number I computed, I checked it against two crashes that anyone in the Chilean pension system remembers living through:
 
 | Event | Fondo A drawdown | Fondo E drawdown |
 |---|---|---|
 | 2008 financial crisis (peak to Nov 2008 trough) | **-30.8%** | +0.4% |
 | COVID crash (Feb 20 - Mar 23, 2020) | **-24.6%** | -3.7% |
 
-Both match the publicly reported magnitude of those crashes. Fondo A (up to 80% equities) dropping ~25-30% while Fondo E (mostly fixed income) barely moves is exactly the risk-profile difference the multifondo system is designed to produce.
+("Drawdown" here just means: how far did the index fall from its high point to its low point during that crisis, in percent.) Both numbers match the magnitude of those crashes as publicly reported at the time. That Fondo A (up to 80% stocks) dropped ~25-30% while Fondo E (mostly bonds) barely moved isn't a coincidence — it's exactly the risk-profile difference the multifondo system was designed to produce, and seeing the data reproduce it independently is what tells me the index-building logic above is actually correct, not just plausible-looking.
 
 ![Fund A vs Fund E, full history](outputs/figures/fund_a_vs_e_history.png)
 
-Log scale, patrimonio-weighted index, base 100 at each fund's earliest available date. Fondo C and E have data back to 2002-01-02 (the original pre-reform single fund lineage); A, B and D start 2002-09-28, when the 2002 multifondo reform actually split the system into five funds. The three dashed lines mark the crisis windows analyzed below — 2008 and 2020 show up as sharp, visible drops in Fondo A that Fondo E barely registers; 2022 is a slower grind that both funds feel.
+Log scale, patrimonio-weighted index, base 100 at each fund's earliest available date. Fondo C and E have data back to 2002-01-02 (the original pre-reform single-fund lineage); A, B and D start 2002-09-28, when the 2002 multifondo reform actually split the system into five funds. The three dashed lines mark the crisis windows analyzed below — 2008 and 2020 show up as sharp, visible drops in Fondo A that Fondo E barely registers; 2022 is a slower grind that both funds feel.
+
+**Interactive version**: `outputs/figures/*.png` above are static; running `python scripts/make_interactive_dashboard.py` builds `outputs/interactive/pension_switching_dashboard.html` — open it in any browser to zoom into a specific crash, hover over any day for its exact index value, and hover over each panic-switch bar below for its underlying "stay" vs. "panic" numbers. It's gitignored (not committed) because the underlying JSON payload for ~9,000 days × 2 funds makes the file large; regenerating it locally takes a few seconds once the pipeline below has run once.
 
 ## The panic-switch counterfactual
 
-For each crisis, I compare two real, back-tested paths using only real index levels on real calendar dates — no synthetic assumptions:
+A "counterfactual" here just means: I take two different decisions a saver could have made on the *same* real days, using the *same* real index values, and compare where each one ends up. Nothing is simulated or assumed about the market — only the two decisions are hypothetical.
 
-- **STAY**: money stays in Fondo A the entire window.
-- **PANIC**: money moves from A to E at the crash's trough (empirically, that's closer to when retail switching actually spikes — after the drop is already realized and painful, not before it) and moves back to A only `N` months later, once the recovery has already happened without them.
+- **STAY**: money stays in Fondo A the entire window — the do-nothing baseline.
+- **PANIC**: money moves from A to E at the crash's trough (the lowest point) — not at the first sign of trouble, because that's not when people actually react. Real switching spikes *after* the drop is already realized and painful, once account statements show the loss, which is closer to the trough than the peak. The money then moves back to A only `N` months later, once the recovery has largely already happened without it.
 
 | Scenario | Stay in A | Panic-switch (A→E→A) | Cost of panic |
 |---|---|---|---|
@@ -43,20 +52,23 @@ For each crisis, I compare two real, back-tested paths using only real index lev
 | COVID 2020, returns after 12mo | +32.2% | +6.3% | **25.9 pts** |
 | 2022 rate-hike shock, returns after 12mo | +5.6% | +5.5% | **0.1 pts** |
 
+("Cost of panic," in points, is just the STAY percentage minus the PANIC percentage — e.g. in the first row, staying lost 4.5%, but panicking lost 28.7%, a **24.2 percentage-point** gap between the two choices over the same 2 years.)
+
 ![Cost of panic-switching by scenario](outputs/figures/panic_switch_cost.png)
 
-**Honest finding, not cherry-picked**: the 2022 scenario shows almost no cost. That's real — 2022's crisis was a slow, grinding repricing driven by rate hikes and inflation, not a sharp V-shaped crash. Bonds (what Fondo E holds most of) sold off too that year, so fleeing to E didn't actually protect anything, and there was no sharp recovery in A to miss. The panic-switch penalty isn't a universal tax — it's specifically the cost of mistiming a sharp crash-and-V-shaped-recovery, which is exactly what 2008 and 2020 were and 2022 wasn't.
+**Honest finding, not cherry-picked**: the 2022 scenario shows almost no cost, and I want to be upfront that this wasn't filtered out to make the story cleaner — it's the same methodology applied to a fourth real period, and it happens to disagree with the other three. Here's why, in plain terms: 2022's crisis was a slow, grinding repricing driven by rising interest rates and inflation, not a sharp drop-then-bounce. Bonds (what Fondo E mostly holds) *also* sold off that year because rising rates hurt bond prices too — so fleeing to E didn't actually dodge much pain, and because Fondo A never staged a sharp V-shaped recovery afterward, there was no missed rebound to pay for either. The takeaway isn't "panic-switching always costs ~25 points" — it's that the cost is specific to a certain *shape* of crisis (a sharp fall followed by a sharp recovery), which is exactly what 2008 and COVID were, and what 2022 wasn't.
 
 ## Reproduce it
 
 ```bash
 pip install -r requirements.txt
-python etl/fetch_valor_cuota.py      # downloads the 5 real source files (~7MB)
-python etl/parse_valor_cuota.py      # -> data/processed/valor_cuota_long.parquet
-python etl/build_duckdb.py           # -> data/pension_funds.duckdb
-python analysis/panic_switch_cost.py # -> reports/panic_switch_results.csv
-python scripts/make_charts.py        # -> outputs/figures/*.png
-pytest tests/ -v                     # 9 tests, no network needed (synthetic fixtures)
+python etl/fetch_valor_cuota.py            # downloads the 5 real source files (~7MB)
+python etl/parse_valor_cuota.py            # -> data/processed/valor_cuota_long.parquet
+python etl/build_duckdb.py                 # -> data/pension_funds.duckdb
+python analysis/panic_switch_cost.py       # -> reports/panic_switch_results.csv
+python scripts/make_charts.py              # -> outputs/figures/*.png
+python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (not committed, see above)
+pytest tests/ -v                           # 9 tests, no network needed (synthetic fixtures)
 ```
 
 ## Next steps
