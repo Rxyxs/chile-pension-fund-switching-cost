@@ -1,0 +1,5 @@
+scenario,from_fund,to_fund,entry_date,trough_date,return_date,exit_date,stay_growth_pct,panic_growth_pct,cost_of_panic_pct_pts
+"GFC 2008 (A -> E, vuelve a los 12 meses)",A,E,2008-03-01,2008-11-20,2009-11-20,2010-03-01,-4.51,-28.68,24.17
+"COVID 2020 (A -> E, vuelve a los 6 meses)",A,E,2019-09-01,2020-03-23,2020-09-23,2021-03-01,20.3,8.29,12.01
+"COVID 2020 (A -> E, vuelve a los 12 meses)",A,E,2019-09-01,2020-03-23,2021-03-23,2021-09-01,32.2,6.29,25.91
+"Alza de tasas 2022 (A -> E, vuelve a los 12 meses)",A,E,2021-06-01,2022-10-20,2023-10-20,2023-12-01,5.56,5.51,0.05
