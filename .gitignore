@@ -6,8 +6,6 @@ data/raw/
 data/processed/
 *.duckdb
 .DS_Store
-CLAUDE.md
-.claude/
 
 # Interactive Plotly dashboard: regenerate locally with scripts/make_interactive_dashboard.py.
 outputs/interactive/
