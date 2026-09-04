@@ -28,6 +28,7 @@ def db(tmp_path, monkeypatch):
     long_df.write_parquet(parquet_path)
 
     monkeypatch.setattr(etl, "PARQUET_PATH", parquet_path)
+    monkeypatch.setattr(etl, "TRASPASOS_PARQUET_PATH", tmp_path / "does_not_exist.parquet")
     monkeypatch.setattr(etl, "DB_PATH", tmp_path / "test.duckdb")
     monkeypatch.setattr(etl, "ROOT", tmp_path)
     etl.main()
@@ -60,3 +61,30 @@ def test_index_compounds_daily_returns_correctly(db):
     for _, weighted_return, index_value in rows:
         running *= 1 + weighted_return
         assert index_value == pytest.approx(running, rel=1e-9)
+
+
+def test_traspasos_monthly_table_loads_when_parquet_present(tmp_path, monkeypatch):
+    long_df = pl.DataFrame(
+        {"fondo": ["A"], "afp": ["X"], "fecha": ["2020-01-01"],
+         "valor_cuota": [100.0], "valor_patrimonio": [1000.0]}
+    ).with_columns(pl.col("fecha").str.to_date())
+    parquet_path = tmp_path / "valor_cuota_long.parquet"
+    long_df.write_parquet(parquet_path)
+
+    traspasos_df = pl.DataFrame(
+        {"ficha": ["N1", "N2"], "data_month": ["2020-01", "2020-02"], "total_traspasos": [1000, 2000]}
+    )
+    traspasos_path = tmp_path / "traspasos_monthly.parquet"
+    traspasos_df.write_parquet(traspasos_path)
+
+    monkeypatch.setattr(etl, "PARQUET_PATH", parquet_path)
+    monkeypatch.setattr(etl, "TRASPASOS_PARQUET_PATH", traspasos_path)
+    monkeypatch.setattr(etl, "DB_PATH", tmp_path / "test2.duckdb")
+    monkeypatch.setattr(etl, "ROOT", tmp_path)
+    etl.main()
+
+    con = duckdb.connect(str(tmp_path / "test2.duckdb"), read_only=True)
+    rows = con.execute("SELECT data_month, total_traspasos FROM traspasos_monthly ORDER BY data_month").fetchall()
+    con.close()
+
+    assert rows == [("2020-01", 1000), ("2020-02", 2000)]

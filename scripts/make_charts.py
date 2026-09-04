@@ -6,6 +6,7 @@ from pathlib import Path
 
 import duckdb
 import matplotlib.pyplot as plt
+import pandas as pd
 import polars as pl
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,8 +59,38 @@ def fig_panic_cost_bars() -> None:
     plt.close(fig)
 
 
+def fig_traspasos_volume() -> None:
+    con = duckdb.connect(str(DB_PATH), read_only=True)
+    df = con.execute(
+        "SELECT data_month, total_traspasos FROM traspasos_monthly ORDER BY data_month"
+    ).fetchdf()
+    con.close()
+
+    months = pd.to_datetime(df["data_month"] + "-01")
+
+    fig, ax = plt.subplots(figsize=(11, 5))
+    ax.plot(months, df["total_traspasos"], marker="o", markersize=4, color="#2c3e50", linewidth=1.4)
+
+    for label, x in [("Trough COVID (23-mar-2020)", date(2020, 3, 23)),
+                      ("Trough alza tasas (20-oct-2022)", date(2022, 10, 20))]:
+        ax.axvline(x, color="#c0392b", linestyle="--", linewidth=0.9, alpha=0.7)
+        ax.text(x, ax.get_ylim()[1], label, rotation=90, fontsize=8, color="#c0392b", va="top", ha="right")
+
+    ax.axvspan(date(2020, 3, 1), date(2020, 9, 1), color="#c0392b", alpha=0.06)
+    ax.text(date(2020, 6, 1), ax.get_ylim()[0], "cuarentena estricta", fontsize=8, color="#c0392b",
+            ha="center", va="bottom")
+
+    ax.set_title("N° real de cuentas traspasadas entre AFP por mes (Ficha Estadística Previsional, SP)")
+    ax.set_ylabel("N° de cuentas traspasadas")
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.savefig(FIG_DIR / "traspasos_volume.png", dpi=150)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     fig_full_history()
     fig_panic_cost_bars()
+    fig_traspasos_volume()
     print(f"-> {FIG_DIR.relative_to(ROOT)}")

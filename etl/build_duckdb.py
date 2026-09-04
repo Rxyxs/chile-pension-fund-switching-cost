@@ -15,6 +15,7 @@ import duckdb
 
 ROOT = Path(__file__).resolve().parents[1]
 PARQUET_PATH = ROOT / "data" / "processed" / "valor_cuota_long.parquet"
+TRASPASOS_PARQUET_PATH = ROOT / "data" / "processed" / "traspasos_monthly.parquet"
 DB_PATH = ROOT / "data" / "pension_funds.duckdb"
 
 
@@ -73,6 +74,18 @@ def main() -> None:
         ORDER BY fondo, fecha
         """
     )
+
+    if TRASPASOS_PARQUET_PATH.exists():
+        con.execute(
+            f"""
+            CREATE OR REPLACE TABLE traspasos_monthly AS
+            SELECT data_month, total_traspasos
+            FROM read_parquet('{TRASPASOS_PARQUET_PATH.as_posix()}')
+            ORDER BY data_month
+            """
+        )
+        n_months = con.execute("SELECT count(*) FROM traspasos_monthly").fetchone()[0]
+        print(f"traspasos_monthly: {n_months} meses reales (Ficha Estadistica Previsional, SP)")
 
     for fondo in ["A", "B", "C", "D", "E"]:
         n = con.execute("SELECT count(*) FROM fund_index WHERE fondo = ?", [fondo]).fetchone()[0]

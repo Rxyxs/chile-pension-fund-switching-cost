@@ -58,22 +58,36 @@ Un "contrafactual" acá solo significa: tomo dos decisiones distintas que un afi
 
 **Hallazgo honesto, no elegido a dedo**: el escenario 2022 muestra un costo casi nulo, y quiero ser directo en que esto no se filtró para que la historia se viera más limpia — es la misma metodología aplicada a un cuarto período real, y resulta que contradice a los otros tres. La razón, en simple: la crisis de 2022 fue un reajuste lento y sostenido impulsado por el alza de tasas y la inflación, no una caída-y-rebote brusca. Los bonos (lo que el Fondo E tiene mayoritariamente) *también* se vendieron ese año porque el alza de tasas también les pega a los bonos — así que huir a E no esquivó mucho dolor, y como el Fondo A nunca protagonizó una recuperación brusca en V después, tampoco hubo un rebote perdido que pagar. La conclusión no es "cambiarse en pánico siempre cuesta ~25 puntos" — es que el costo es específico a cierta *forma* de crisis (una caída brusca seguida de una recuperación brusca), que es exactamente lo que fueron 2008 y COVID, y lo que 2022 no fue.
 
+## ¿El comportamiento real de cambio se dispara cerca del valle?
+
+Todo lo anterior responde "cuánto costaría si alguien se cambiara en pánico" — es un contrafactual solo de precios, no evidencia de que la gente realmente lo hace. Así que fui a buscar el comportamiento real: la Superintendencia de Pensiones publica un boletín mensual (`Ficha Estadística Previsional`, un PDF por mes, 164 números archivados desde dic. 2012) que reporta, con 2 meses de rezago, el número real de cuentas traspasadas entre AFP a nivel de todo el sistema ese mes. Descargué 22 de estos boletines — cubriendo una línea base pre-COVID (mediados de 2019), la ventana completa de COVID (2020) y la ventana de alza de tasas 2022 — y extraje ese número real de cada uno.
+
+**Una segunda trampa real de calidad de datos, esta vez en los propios PDF fuente**: la tabla (`Tabla N° 7`) que reporta este número tiene una nota al pie escrita en prosa — *"...traspasadas entre AFP en agosto de 2020 fue de..."* — y en al menos dos de los 22 boletines revisados, esa prosa nombra el mes equivocado (un mes de diferencia en un caso, un año en otro) respecto a lo que dicen los propios encabezados de columna de la tabla. `etl/parse_traspasos.py` no confía en la prosa de la nota al pie para el mes — deriva el mes del encabezado de la tabla (corroborado por todas las demás columnas de esa misma tabla), y solo toma el número de traspasos de la nota al pie. `tests/test_parse_traspasos.py` fija este error exacto con un fixture sintético que lo reproduce.
+
+![Volumen mensual real de traspasos entre AFP](outputs/figures/traspasos_volume.png)
+
+**Esta es la sorpresa honesta de todo el proyecto**: el volumen de traspasos *no* se dispara en el valle de COVID — *colapsa*, de ~53.000 cuentas/mes a comienzos de 2020 a solo 15.618 en mayo de 2020, para luego rebotar bruscamente a ~50.000 en octubre de 2020. Eso no es evidencia de que la gente no estuviera en pánico — Chile estuvo en cuarentena estricta desde fines de marzo de 2020, las visitas a sucursales de AFP estaban restringidas, y parte del proceso de traspaso todavía no era completamente digital en ese momento, así que el colapso está confundido con la imposibilidad literal de la gente de procesar un cambio, no con que no quisieran hacerlo. El rebote de octubre de 2020 coincide con la flexibilización de la cuarentena y con la controversia política por la primera ley de retiro de fondos previsionales (aprobada en julio de 2020), que puso a las AFP en la contingencia diaria — plausiblemente un gatillo conductual más grande que la propia caída de marzo. La ventana de 2022, en cambio, no muestra ningún movimiento dramático cerca del valle de octubre — consistente con el costo de pánico de ~0 puntos encontrado para ese escenario más arriba: si cambiarse apenas habría costado algo, hay poca razón para esperar un salto en los cambios tampoco.
+
+En resumen: la historia del lado de los precios (cambiarse en pánico en una caída brusca en V es caro) se sostiene bien. La historia del lado del comportamiento (la gente corre a la seguridad justo en el valle) no se sostiene limpiamente en estos datos — el patrón real en 2020 se parece más a "no podía moverse, y se movió una vez que todo reabrió" que a "entró en pánico en el fondo".
+
 ## Reproducirlo
 
 ```bash
 pip install -r requirements.txt
 python etl/fetch_valor_cuota.py               # descarga los 5 archivos fuente reales (~7MB)
 python etl/parse_valor_cuota.py               # -> data/processed/valor_cuota_long.parquet
+python etl/fetch_fichas.py                    # descarga 22 boletines mensuales reales (PDF)
+python etl/parse_traspasos.py                 # -> data/processed/traspasos_monthly.parquet
 python etl/build_duckdb.py                    # -> data/pension_funds.duckdb
 python analysis/panic_switch_cost.py          # -> reports/panic_switch_results.csv
 python scripts/make_charts.py                 # -> outputs/figures/*.png
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (no commiteado, ver arriba)
-pytest tests/ -v                              # 9 tests, sin necesidad de red (fixtures sintéticas)
+pytest tests/ -v                              # 13 tests, sin necesidad de red (fixtures sintéticas)
 ```
 
 ## Próximos pasos
 
-El modelo de cambio en pánico asume un solo movimiento de suma total en el valle — un afiliado real podría cambiarse gradualmente o varias veces (la ley limita los cambios por año, algo que este proyecto no rastrea). Un seguimiento lógico: extraer los boletines mensuales de volumen de traspasos (`Compendio de Pensiones`, publicados en PDF) para verificar si el volumen real de cambios efectivamente se dispara cerca de los valles que este proyecto identificó, cerrando el ciclo entre "cuánto cuesta" y "si la gente realmente lo hace".
+La ventana de 22 boletines cubre COVID y 2022 pero no la GFC de 2008 (la serie de boletines solo empieza en dic. 2012) — el hallazgo del lado de los precios sobre la GFC arriba no tiene una contraparte de comportamiento con la cual verificarse. Un seguimiento lógico: extender la serie de volumen de traspasos más atrás, y desagregarla por fondo de origen/destino (`Tabla N° 5`, todavía no extraída) para ver si la plata que sí se movió en 2020 fue hacia donde la historia del pánico predeciría — hacia el Fondo E — o hacia otro lado completamente distinto.
 
 ## Autor
 

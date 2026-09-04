@@ -58,22 +58,36 @@ A "counterfactual" here just means: I take two different decisions a saver could
 
 **Honest finding, not cherry-picked**: the 2022 scenario shows almost no cost, and I want to be upfront that this wasn't filtered out to make the story cleaner — it's the same methodology applied to a fourth real period, and it happens to disagree with the other three. Here's why, in plain terms: 2022's crisis was a slow, grinding repricing driven by rising interest rates and inflation, not a sharp drop-then-bounce. Bonds (what Fondo E mostly holds) *also* sold off that year because rising rates hurt bond prices too — so fleeing to E didn't actually dodge much pain, and because Fondo A never staged a sharp V-shaped recovery afterward, there was no missed rebound to pay for either. The takeaway isn't "panic-switching always costs ~25 points" — it's that the cost is specific to a certain *shape* of crisis (a sharp fall followed by a sharp recovery), which is exactly what 2008 and COVID were, and what 2022 wasn't.
 
+## Does real switching behavior actually spike near the trough?
+
+Everything above answers "what would it cost if someone panic-switched" — it's a price-only counterfactual, not evidence that people actually do this. So I went looking for the real behavior: the Superintendencia de Pensiones publishes a monthly bulletin (`Ficha Estadística Previsional`, one PDF per month, 164 issues archived back to Dec 2012) that reports, with a 2-month lag, the real system-wide count of accounts transferred between AFPs that month. I pulled 22 of these bulletins — covering a pre-COVID baseline (mid-2019) plus the full COVID window (2020) and the 2022 rate-hike window — and extracted that one real number from each.
+
+**A second real data-quality trap, in the source PDFs themselves**: the table (`Tabla N° 7`) that reports this number has a footnote written in prose — *"...traspasadas entre AFP en agosto de 2020 fue de..."* — and in at least two of the 22 bulletins checked, that prose names the wrong month (off by a month, in one case off by a year) relative to what the table's own column headers say. `etl/parse_traspasos.py` doesn't trust the footnote's prose for the month — it derives the month from the table's header row instead (which is corroborated by every other column on the same table), and only takes the transfer count itself from the footnote. `tests/test_parse_traspasos.py` locks in this exact bug with a synthetic fixture reproducing it.
+
+![Real monthly transfer volume between AFPs](outputs/figures/traspasos_volume.png)
+
+**This is the honest surprise of the whole project**: transfer volume does *not* spike at the COVID trough — it *collapses*, from ~53,000 accounts/month in early 2020 down to just 15,618 in May 2020, before rebounding sharply to ~50,000 in October 2020. That's not evidence people weren't panicking — Chile was under strict lockdown from late March 2020, AFP branch visits were restricted, and part of the transfer process wasn't fully digital yet at the time, so the collapse is confounded with people's literal inability to process a switch, not proof they didn't want to. The October 2020 rebound lines up with lockdown easing and with the political controversy around the first pension-fund withdrawal law (passed July 2020) putting AFPs in the daily news — plausibly a bigger behavioral trigger than the March crash itself. The 2022 window, by contrast, shows no dramatic move around the October trough at all — consistent with the ~0-point panic cost found for that scenario above: if switching barely would have cost anything, there's little reason to expect a spike in switching either.
+
+Net: the price-side story (panic-switching a sharp V-shaped crash is expensive) holds up well. The behavior-side story (people rush into safety exactly at the trough) does not hold up cleanly in this data — the real pattern in 2020 looks more like "couldn't move, then moved once things reopened" than "panicked at the bottom."
+
 ## Reproduce it
 
 ```bash
 pip install -r requirements.txt
 python etl/fetch_valor_cuota.py            # downloads the 5 real source files (~7MB)
 python etl/parse_valor_cuota.py            # -> data/processed/valor_cuota_long.parquet
+python etl/fetch_fichas.py                 # downloads 22 real monthly bulletin PDFs
+python etl/parse_traspasos.py              # -> data/processed/traspasos_monthly.parquet
 python etl/build_duckdb.py                 # -> data/pension_funds.duckdb
 python analysis/panic_switch_cost.py       # -> reports/panic_switch_results.csv
 python scripts/make_charts.py              # -> outputs/figures/*.png
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (not committed, see above)
-pytest tests/ -v                           # 9 tests, no network needed (synthetic fixtures)
+pytest tests/ -v                           # 13 tests, no network needed (synthetic fixtures)
 ```
 
 ## Next steps
 
-The panic-switch model assumes a single lump-sum move at the trough — a real affiliate could switch gradually or multiple times (the law caps switches per year, not tracked here). A logical follow-up: extract the monthly switch-volume bulletins (`Compendio de Pensiones`, published as PDF) to check whether real switch volume actually spikes near the troughs this project identified, closing the loop between "what it costs" and "whether people actually do it."
+The 22-bulletin window covers COVID and 2022 but not the 2008 GFC (the bulletin series only starts Dec 2012) — the price-side GFC finding above has no behavior-side counterpart to check it against. A logical follow-up: extend the transfer-volume series further, and split it by origin/destination fund (`Tabla N° 5`, not yet extracted) to see whether the money that did move in 2020 went where the panic story would predict — toward Fondo E — or somewhere else entirely.
 
 ## Author
 

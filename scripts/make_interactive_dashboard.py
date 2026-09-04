@@ -32,18 +32,23 @@ def main() -> None:
     idx = con.execute(
         "SELECT fondo, fecha, index_value FROM fund_index WHERE fondo IN ('A','E') ORDER BY fondo, fecha"
     ).fetchdf()
+    traspasos = con.execute(
+        "SELECT data_month, total_traspasos FROM traspasos_monthly ORDER BY data_month"
+    ).fetchdf()
     con.close()
+    traspasos["fecha"] = pd.to_datetime(traspasos["data_month"] + "-01")
 
     results = pd.read_csv(RESULTS_PATH)
 
     fig = make_subplots(
-        rows=2,
+        rows=3,
         cols=1,
-        row_heights=[0.62, 0.38],
-        vertical_spacing=0.14,
+        row_heights=[0.46, 0.28, 0.26],
+        vertical_spacing=0.09,
         subplot_titles=(
             "Índice de rentabilidad real ponderado por patrimonio — Fondo A vs. Fondo E (2002-2026)",
             "Costo real de cambiarse en pánico (A → E → A) por escenario",
+            "N° real de cuentas traspasadas entre AFP por mes (¿se dispara en el valle?)",
         ),
     )
 
@@ -82,8 +87,20 @@ def main() -> None:
     )
     fig.update_xaxes(title_text="Puntos porcentuales de rentabilidad perdida", row=2, col=1)
 
+    fig.add_trace(
+        go.Scatter(
+            x=traspasos["fecha"], y=traspasos["total_traspasos"], mode="lines+markers",
+            line=dict(color="#2c3e50", width=1.4), marker=dict(size=5), showlegend=False,
+            hovertemplate="%{x|%Y-%m}<br>%{y:,.0f} cuentas traspasadas<extra></extra>",
+        ),
+        row=3, col=1,
+    )
+    for label, x in [("Trough COVID", "2020-03-23"), ("Trough alza tasas", "2022-10-20")]:
+        fig.add_vline(x=x, line_dash="dash", line_color="#c0392b", opacity=0.6, row=3, col=1)
+    fig.update_yaxes(title_text="N° cuentas traspasadas", row=3, col=1)
+
     fig.update_layout(
-        height=850,
+        height=1150,
         template="plotly_white",
         title_text="Costo real de cambiarse de fondo en pánico — datos reales SP (2002-2026)",
         margin=dict(l=10, r=10, t=90, b=10),
