@@ -1,0 +1,11 @@
+{
+  "n_real_episodes": 3,
+  "n_scenarios": 15,
+  "mean_cost_pct_pts": 17.15,
+  "median_cost_pct_pts": 12.19,
+  "std_cost_pct_pts": 10.05,
+  "min_cost_pct_pts": 1.53,
+  "max_cost_pct_pts": 36.51,
+  "pct_scenarios_panic_worse": 100.0,
+  "pct_scenarios_panic_better": 0.0
+}

@@ -58,6 +58,46 @@ Un "contrafactual" acá solo significa: tomo dos decisiones distintas que un afi
 
 **Hallazgo honesto, no elegido a dedo**: el escenario 2022 muestra un costo casi nulo, y quiero ser directo en que esto no se filtró para que la historia se viera más limpia — es la misma metodología aplicada a un cuarto período real, y resulta que contradice a los otros tres. La razón, en simple: la crisis de 2022 fue un reajuste lento y sostenido impulsado por el alza de tasas y la inflación, no una caída-y-rebote brusca. Los bonos (lo que el Fondo E tiene mayoritariamente) *también* se vendieron ese año porque el alza de tasas también les pega a los bonos — así que huir a E no esquivó mucho dolor, y como el Fondo A nunca protagonizó una recuperación brusca en V después, tampoco hubo un rebote perdido que pagar. La conclusión no es "cambiarse en pánico siempre cuesta ~25 puntos" — es que el costo es específico a cierta *forma* de crisis (una caída brusca seguida de una recuperación brusca), que es exactamente lo que fueron 2008 y COVID, y lo que 2022 no fue.
 
+## Más allá de 4 ejemplos: todas las caídas reales que hay en los datos
+
+Los cuatro escenarios de arriba se eligieron porque son las crisis que cualquiera que las vivió recuerda por nombre — y eso es un sesgo de selección real: una lista elegida a mano solo contiene las crisis que a alguien se le ocurrió nombrar, y tiende a sobrerrepresentar las más dramáticas y conocidas. `analysis/drawdown_episodes.py` saca al humano de ese paso: escanea todo el índice del Fondo A 2002-2026 de forma programática buscando cada período donde el índice cayó al menos 15% desde un peak anterior y luego se recuperó por completo, sin depender de memoria de "crisis famosas".
+
+Encontró exactamente 3:
+
+| Peak | Valle | Caída real | Recuperado |
+|---|---|---|---|
+| 2007-10-31 | 2008-11-21 | -43,2% | 2010-11-05 |
+| 2011-01-06 | 2011-10-05 | -17,3% | 2013-01-30 |
+| 2020-02-24 | 2020-03-24 | -26,5% | 2020-11-25 |
+
+Ojo que el período del alza de tasas 2022 de la tabla de arriba **no** está en esta lista — nunca cruzó una caída del 15% con esta medida, lo cual es consistente (no contradice) con el costo de pánico casi nulo ya encontrado para ese escenario más arriba: una crisis que nunca fue una caída brusca no genera mucho "valle" al cual venderse en pánico.
+
+`analysis/systematic_panic_switch_cost.py` prueba cada una de estas 3 caídas reales contra una grilla de 5 rezagos de retorno realistas (3/6/12/18/24 meses) — 15 escenarios en total, no 4 — y reporta la distribución completa en vez de anécdotas individuales:
+
+```bash
+python analysis/systematic_panic_switch_cost.py     # -> reports/systematic_panic_switch_results.csv
+```
+
+| | Valor |
+|---|---|
+| Escenarios | 15 (3 caídas reales × 5 rezagos de retorno) |
+| Costo medio del pánico | **+17,15 pts** |
+| Costo mediano del pánico | +12,19 pts |
+| Desv. estándar | 10,05 pts |
+| Rango | +1,53 a +36,51 pts |
+| Pánico peor que quedarse | **100%** de los escenarios |
+| Pánico mejor que quedarse | 0% de los escenarios |
+
+Los 15 escenarios sistemáticos favorecieron quedarse — no solo las 3 crisis más conocidas, en todos los rezagos probados. Es una versión más robusta y mecánicamente derivada de la misma conclusión que apuntaban los 4 escenarios elegidos a mano, no una distinta — pero ahora respaldada por cada crisis real que califica en el dataset, no por cuatro elegidas a dedo. Números completos por escenario en `reports/systematic_panic_switch_results.csv`; números agregados en `reports/systematic_panic_switch_summary.json`.
+
+## Calcula tu propio escenario
+
+`scripts/calculator.py` es una calculadora de línea de comandos interactiva: elegí una de las caídas reales detectadas arriba (o ingresá tus propias fechas), elegí a qué fondo te cambiarías en pánico y cuántos meses antes de volver, y calcula el costo histórico real contra los mismos datos que todo lo de arriba — no una regla general.
+
+```bash
+python scripts/calculator.py
+```
+
 ## ¿El comportamiento real de cambio se dispara cerca del valle?
 
 Todo lo anterior responde "cuánto costaría si alguien se cambiara en pánico" — es un contrafactual solo de precios, no evidencia de que la gente realmente lo hace. Así que fui a buscar el comportamiento real: la Superintendencia de Pensiones publica un boletín mensual (`Ficha Estadística Previsional`, un PDF por mes, 164 números archivados desde dic. 2012) que reporta, con 2 meses de rezago, el número real de cuentas traspasadas entre AFP a nivel de todo el sistema ese mes. Descargué 22 de estos boletines — cubriendo una línea base pre-COVID (mediados de 2019), la ventana completa de COVID (2020) y la ventana de alza de tasas 2022 — y extraje ese número real de cada uno.
@@ -80,9 +120,11 @@ python etl/fetch_fichas.py                    # descarga 22 boletines mensuales 
 python etl/parse_traspasos.py                 # -> data/processed/traspasos_monthly.parquet
 python etl/build_duckdb.py                    # -> data/pension_funds.duckdb
 python analysis/panic_switch_cost.py          # -> reports/panic_switch_results.csv
+python analysis/systematic_panic_switch_cost.py  # -> reports/systematic_panic_switch_results.csv + summary.json
 python scripts/make_charts.py                 # -> outputs/figures/*.png
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (no commiteado, ver arriba)
-pytest tests/ -v                              # 13 tests, sin necesidad de red (fixtures sintéticas)
+python scripts/calculator.py                  # interactivo: tu propio escenario de cambio en pánico
+pytest tests/ -v                              # 29 tests, sin necesidad de red (fixtures sintéticas)
 ```
 
 ## Próximos pasos

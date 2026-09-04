@@ -58,6 +58,46 @@ A "counterfactual" here just means: I take two different decisions a saver could
 
 **Honest finding, not cherry-picked**: the 2022 scenario shows almost no cost, and I want to be upfront that this wasn't filtered out to make the story cleaner — it's the same methodology applied to a fourth real period, and it happens to disagree with the other three. Here's why, in plain terms: 2022's crisis was a slow, grinding repricing driven by rising interest rates and inflation, not a sharp drop-then-bounce. Bonds (what Fondo E mostly holds) *also* sold off that year because rising rates hurt bond prices too — so fleeing to E didn't actually dodge much pain, and because Fondo A never staged a sharp V-shaped recovery afterward, there was no missed rebound to pay for either. The takeaway isn't "panic-switching always costs ~25 points" — it's that the cost is specific to a certain *shape* of crisis (a sharp fall followed by a sharp recovery), which is exactly what 2008 and COVID were, and what 2022 wasn't.
 
+## Beyond 4 examples: every real crash the data actually contains
+
+The four scenarios above were picked because they're the crises anyone who lived through them remembers by name — and that's a real form of selection bias: a hand-picked list only contains crises someone thought to name, and tends to overrepresent dramatic, well-known ones. `analysis/drawdown_episodes.py` removes the human from that step: it scans the full 2002-2026 Fondo A index programmatically for every period where the index fell at least 15% from a prior peak and later fully recovered, no memory of "famous crashes" required.
+
+It found exactly 3:
+
+| Peak | Trough | Real drawdown | Recovered |
+|---|---|---|---|
+| 2007-10-31 | 2008-11-21 | -43.2% | 2010-11-05 |
+| 2011-01-06 | 2011-10-05 | -17.3% | 2013-01-30 |
+| 2020-02-24 | 2020-03-24 | -26.5% | 2020-11-25 |
+
+Notably, the 2022 rate-hike period from the table above is **not** in this list — it never crossed a 15% drawdown by this measure, which is consistent with (not contradicting) the near-zero panic cost already found for it above: a crisis that was never a sharp drawdown in the first place doesn't create much of a "trough" to panic-sell into.
+
+`analysis/systematic_panic_switch_cost.py` then tests each of these 3 real episodes against a grid of 5 realistic return lags (3/6/12/18/24 months) — 15 scenarios total, not 4 — and reports the distribution instead of individual anecdotes:
+
+```bash
+python analysis/systematic_panic_switch_cost.py     # -> reports/systematic_panic_switch_results.csv
+```
+
+| | Value |
+|---|---|
+| Scenarios | 15 (3 real episodes × 5 return lags) |
+| Mean cost of panic | **+17.15 pts** |
+| Median cost of panic | +12.19 pts |
+| Std. dev. | 10.05 pts |
+| Range | +1.53 to +36.51 pts |
+| Panic worse than staying | **100%** of scenarios |
+| Panic better than staying | 0% of scenarios |
+
+Every one of the 15 systematic scenarios favored staying — not just the 3 headline crashes, across every return lag tested. That's a stronger, more mechanically-derived version of the same conclusion the 4 hand-picked scenarios pointed to, not a different one — but now it's backed by every qualifying real crash in the dataset instead of a curated four. Full per-scenario numbers in `reports/systematic_panic_switch_results.csv`; aggregate numbers in `reports/systematic_panic_switch_summary.json`.
+
+## Calculate your own scenario
+
+`scripts/calculator.py` is an interactive command-line calculator: pick one of the real detected drawdown episodes above (or type your own dates), choose which fund you'd panic-switch into and how many months before you'd move back, and it computes the real historical cost against the same data as everything above — not a rule of thumb.
+
+```bash
+python scripts/calculator.py
+```
+
 ## Does real switching behavior actually spike near the trough?
 
 Everything above answers "what would it cost if someone panic-switched" — it's a price-only counterfactual, not evidence that people actually do this. So I went looking for the real behavior: the Superintendencia de Pensiones publishes a monthly bulletin (`Ficha Estadística Previsional`, one PDF per month, 164 issues archived back to Dec 2012) that reports, with a 2-month lag, the real system-wide count of accounts transferred between AFPs that month. I pulled 22 of these bulletins — covering a pre-COVID baseline (mid-2019) plus the full COVID window (2020) and the 2022 rate-hike window — and extracted that one real number from each.
@@ -80,9 +120,11 @@ python etl/fetch_fichas.py                 # downloads 22 real monthly bulletin 
 python etl/parse_traspasos.py              # -> data/processed/traspasos_monthly.parquet
 python etl/build_duckdb.py                 # -> data/pension_funds.duckdb
 python analysis/panic_switch_cost.py       # -> reports/panic_switch_results.csv
+python analysis/systematic_panic_switch_cost.py  # -> reports/systematic_panic_switch_results.csv + summary.json
 python scripts/make_charts.py              # -> outputs/figures/*.png
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (not committed, see above)
-pytest tests/ -v                           # 13 tests, no network needed (synthetic fixtures)
+python scripts/calculator.py               # interactive: your own panic-switch scenario
+pytest tests/ -v                           # 29 tests, no network needed (synthetic fixtures)
 ```
 
 ## Next steps
