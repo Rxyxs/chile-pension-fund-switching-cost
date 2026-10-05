@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cambiarse de fondo en pánico</title>
+<meta name="description" content="Cuánto cuesta cambiarse de fondo de pensiones durante una caída, con datos diarios reales de la Superintendencia de Pensiones, 2002-2026.">
+<style>
+  :root {
+    --bg: #FBFAF8; --surface: #FFFFFF; --ink: #23201D; --muted: #6B645D;
+    --line: #E3DED7; --cost: #B5553D; --stay: #4C7A3E; --gold: #B58900;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171614; --surface: #201E1B; --ink: #EDE9E3; --muted: #A9A29A;
+      --line: #322E2A; --cost: #D9765C; --stay: #7FAE6B; --gold: #D9AC3A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171614; --surface: #201E1B; --ink: #EDE9E3; --muted: #A9A29A;
+    --line: #322E2A; --cost: #D9765C; --stay: #7FAE6B; --gold: #D9AC3A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.68 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 16px 96px; }
+  header { padding: 64px 0 36px; border-bottom: 1px solid var(--line); margin-bottom: 40px; }
+  h1 { font-size: clamp(1.8rem, 5.2vw, 2.6rem); line-height: 1.14; margin: 0 0 20px; letter-spacing: -0.02em; }
+  .lede { font-size: clamp(1rem, 2.4vw, 1.14rem); color: var(--muted); margin: 0 0 22px; max-width: 62ch; }
+  .lede strong { color: var(--ink); }
+  .links a {
+    display: inline-block; margin: 0 9px 9px 0; padding: 9px 15px;
+    border: 1px solid var(--line); border-radius: 7px; text-decoration: none;
+    color: var(--ink); background: var(--surface); font-size: .9rem; transition: border-color .15s;
+  }
+  .links a:hover { border-color: var(--cost); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 32px 0; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .kpi .n { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+  .kpi .l { font-size: .82rem; color: var(--muted); margin-top: 5px; }
+  .kpi.cost .n { color: var(--cost); }
+  .kpi.stay .n { color: var(--stay); }
+  h2 { font-size: 1.4rem; margin: 54px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); letter-spacing: -0.01em; }
+  h2 .num { color: var(--cost); margin-right: 8px; font-variant-numeric: tabular-nums; }
+  p { margin: 0 0 16px; max-width: 70ch; }
+  figure { margin: 26px 0; }
+  figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+  figcaption { font-size: .85rem; color: var(--muted); margin-top: 9px; max-width: 70ch; }
+  .tablewrap { overflow-x: auto; margin: 22px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 440px; }
+  th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { color: var(--muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  .neg { color: var(--stay); font-weight: 700; }
+  .pos { color: var(--cost); font-weight: 700; }
+  .callout {
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--cost);
+    border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 26px 0;
+  }
+  .callout.warn { border-left-color: var(--gold); }
+  .callout p:last-child { margin-bottom: 0; }
+  code { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: .86em;
+         font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+  pre { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 15px 17px; overflow-x: auto; font-size: .85rem; }
+  pre code { background: none; border: 0; padding: 0; }
+  ul { max-width: 70ch; padding-left: 22px; } li { margin-bottom: 9px; }
+  footer { margin-top: 68px; padding-top: 24px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--muted); }
+  a { color: var(--cost); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>¿Cuánto cuesta cambiarse de fondo<br>cuando se cae la bolsa?</h1>
+  <p class="lede">
+    Tengo mis ahorros previsionales en un fondo que no elegí mirando datos, como casi todos.
+    Así que me senté a responder esa pregunta con los <strong>datos diarios reales de la
+    Superintendencia de Pensiones</strong> — 278.000 filas, 2002 a 2026 — y no con un mercado simulado.
+  </p>
+  <div class="links">
+    <a href="https://github.com/Rxyxs/chile-pension-fund-switching-cost">Código y metodología</a>
+    <a href="https://www.spensiones.cl/apps/valoresCuotaFondo/">Fuente de los datos</a>
+  </div>
+</header>
+
+<div class="kpis">
+  <div class="kpi cost"><div class="n">+17,2 pp</div><div class="l">costo medio de cambiarse en el piso</div></div>
+  <div class="kpi cost"><div class="n">100%</div><div class="l">de los 15 escenarios favorecieron quedarse</div></div>
+  <div class="kpi stay"><div class="n">−25%</div><div class="l">pérdida a partir de la cual moverse deja de ayudar</div></div>
+  <div class="kpi"><div class="n">3</div><div class="l">caídas reales ≥15% desde 2002</div></div>
+</div>
+
+<p>
+  Un apunte para quien no conoce el sistema: los ahorros obligatorios de cada trabajador están
+  en uno de cinco <em>multifondos</em> (A a E) administrados por una AFP. El <strong>Fondo A</strong>
+  invierte hasta 80% en acciones — más retorno esperado, más vaivén. El <strong>Fondo E</strong> es
+  casi todo renta fija. Uno puede cambiarse cuando quiera, y la jugada popular en una caída es
+  huir de A hacia el "seguro" E.
+</p>
+
+<h2><span class="num">1.</span>Por qué moverse en el piso cuesta</h2>
+<figure>
+  <img src="figures/mecanismo_covid.png" alt="Fondo A y Fondo E durante la caída de 2020 y su recuperación">
+  <figcaption>
+    El Fondo A cae 23% y el E casi no se mueve — que es exactamente por qué huir se siente
+    correcto en ese momento. El costo no se paga el día del cambio: se paga en el año siguiente,
+    cuando A vuelve a +15% y E termina donde empezó.
+  </figcaption>
+</figure>
+
+<div class="callout">
+  <p>
+    Quien se cambia en el piso <strong>materializa la caída completa</strong> y después acompaña
+    a un fondo que sube mucho menos. No se pierde por haberse movido: se pierde por no estar
+    cuando el fondo que se abandonó se recupera.
+  </p>
+</div>
+
+<h2><span class="num">2.</span>En los 15 escenarios, quedarse ganó siempre</h2>
+<p>
+  Las caídas no las elegí a mano: un detector las encuentra barriendo el índice y marcando cada
+  período bajo el agua de 15% o más. Salen tres — 2008, 2011 y 2020 — y cada una se prueba contra
+  cinco plazos de retorno distintos.
+</p>
+<figure>
+  <img src="figures/distribucion_escenarios.png" alt="Distribución del costo del pánico en los 15 escenarios">
+  <figcaption>Toda la masa está a la derecha del cero. Media +17,2 puntos, rango +1,5 a +36,5.</figcaption>
+</figure>
+
+<h2><span class="num">3.</span>¿Y si me hubiera movido antes?</h2>
+<p>
+  Es la pregunta que sigue, y tiene una trampa. Barrer por "días antes del piso" da una respuesta
+  tan cierta como inútil: cambiarse una semana después del techo de 2007 gana 90 puntos porque
+  esquiva el crash entero. Pero <strong>nadie sabe que está parado en el techo</strong> — eso mide
+  presciencia, no pánico.
+</p>
+<p>
+  Lo que una persona sí observa el día que decide es cuánto perdió hasta ahí. Indexando por eso,
+  la respuesta se vuelve accionable:
+</p>
+
+<figure>
+  <img src="figures/punto_de_quiebre.png" alt="Costo de cambiarse según la pérdida ya sufrida">
+  <figcaption>481 combinaciones de día del cambio × plazo de retorno, sobre las 3 caídas reales.</figcaption>
+</figure>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Pérdida ya sufrida al cambiarse</th><th>n</th><th>Costo mediano</th><th>Gana cambiarse</th></tr></thead>
+  <tbody>
+    <tr><td>0% a −5%</td><td>145</td><td class="neg">−14,0 pp</td><td>100%</td></tr>
+    <tr><td>−5% a −10%</td><td>123</td><td class="neg">−18,2 pp</td><td>94%</td></tr>
+    <tr><td>−10% a −20%</td><td>159</td><td class="neg">−10,1 pp</td><td>74%</td></tr>
+    <tr><td>−20% a −30%</td><td>19</td><td class="pos">+2,9 pp</td><td>42%</td></tr>
+    <tr><td>más de −30%</td><td>35</td><td class="pos">+16,2 pp</td><td>29%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout warn">
+  <p>
+    <strong>Esto no es una estrategia.</strong> Que exista una zona donde cambiarse gana no la
+    vuelve ocupable: ganar ahí exige saber que la caída va a continuar, que es justo lo que no se
+    sabe en el momento. El umbral sirve en la dirección contraria — decirle a alguien que ya
+    perdió mucho que moverse ahora no lo salva.
+  </p>
+  <p>
+    Y son <strong>3 episodios, no 3.000</strong>. El balde de −20% a −30% se apoya en 19
+    combinaciones de las mismas crisis, así que ese 42% pesa mucho menos que el 100% de la
+    primera fila.
+  </p>
+</div>
+
+<h2><span class="num">4.</span>La sorpresa: la gente no se cambia en el piso</h2>
+<p>
+  Todo lo anterior responde <em>cuánto costaría</em> si alguien se cambiara — es un contrafactual
+  de precios, no evidencia de que la gente lo haga. Así que fui a buscar el comportamiento real en
+  los boletines mensuales de la Superintendencia.
+</p>
+<figure>
+  <img src="figures/traspasos_volumen.png" alt="Volumen mensual real de traspasos entre AFP">
+  <figcaption>
+    El volumen de traspasos no se dispara en el piso de marzo 2020: <strong>se desploma</strong>,
+    de ~53.000 cuentas al mes a 15.618 en mayo.
+  </figcaption>
+</figure>
+<div class="callout">
+  <p>
+    Esto <strong>no prueba</strong> que la gente no entró en pánico. Chile estaba en cuarentena
+    estricta, las sucursales cerradas y el trámite no era del todo digital. La caída se confunde
+    con no haber <em>podido</em> cambiarse. El dato no da para más, y así queda dicho.
+  </p>
+</div>
+
+<h2><span class="num">5.</span>Dos trampas reales en los datos</h2>
+<ul>
+  <li>
+    <strong>El encabezado del archivo cambia 31 veces.</strong> Qué AFP ocupa qué columna se mueve
+    cada vez que una entra, sale o se fusiona. Leer el archivo con un encabezado fijo — el primer
+    enfoque obvio — atribuye los números de una AFP a otra desde la primera fusión en adelante,
+    en silencio.
+  </li>
+  <li>
+    <strong>Dos boletines nombran el mes equivocado.</strong> La nota al pie que reporta los
+    traspasos está escrita en prosa, y en al menos dos de los 22 boletines esa prosa contradice
+    los encabezados de su propia tabla. El parser deriva el mes de la tabla, no de la prosa.
+  </li>
+</ul>
+
+<h2><span class="num">6.</span>Correlo vos</h2>
+<pre><code>pip install -r requirements.txt
+python etl/fetch_valor_cuota.py      # descarga los 5 archivos reales
+python etl/build_duckdb.py
+python analysis/timing_grid.py       # la grilla de timing
+python scripts/calculator.py         # calculadora interactiva</code></pre>
+<p>
+  <code>scripts/calculator.py</code> deja elegir una caída real (o fechas propias), a qué fondo te
+  habrías cambiado y cuántos meses después habrías vuelto, y calcula el costo histórico real contra
+  los mismos datos de esta página.
+</p>
+
+<footer>
+  Pablo Reyes ·
+  <a href="https://github.com/Rxyxs/chile-pension-fund-switching-cost">github.com/Rxyxs/chile-pension-fund-switching-cost</a>
+  · MIT. Datos públicos de la Superintendencia de Pensiones. Cada cifra y cada gráfico de esta
+  página los produce el pipeline del repositorio; ninguno está escrito a mano.
+  <br><br>
+  Esto es un ejercicio de análisis de datos, no asesoría financiera.
+</footer>
+
+</div>
+</body>
+</html>
