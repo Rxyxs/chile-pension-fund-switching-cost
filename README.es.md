@@ -32,7 +32,7 @@ Antes de confiar en un número que yo mismo calculé, lo verifiqué contra dos c
 
 ("Caída" o *drawdown* acá solo significa: cuánto bajó el índice desde su punto más alto hasta su punto más bajo durante esa crisis, en porcentaje.) Ambos números coinciden con la magnitud de esas caídas tal como se reportó públicamente en su momento. Que el Fondo A (hasta 80% acciones) haya caído ~25-30% mientras el Fondo E (mayormente renta fija) casi no se movió no es coincidencia — es exactamente la diferencia de perfil de riesgo que el sistema de multifondos fue diseñado para producir, y ver que los datos la reproducen de forma independiente es lo que me dice que la lógica de construcción del índice de arriba está efectivamente correcta, no solo que se ve razonable.
 
-![Fondo A vs Fondo E, historia completa](outputs/figures/fund_a_vs_e_history.png)
+![Fondo A vs Fondo E, historia completa](outputs/figures/fondo_a_vs_e_historia.png)
 
 Escala logarítmica, índice ponderado por patrimonio, base 100 en la fecha más temprana disponible de cada fondo. Los Fondos C y E tienen datos desde 2002-01-02 (el linaje del fondo único pre-reforma); A, B y D parten el 2002-09-28, cuando la reforma de multifondos de 2002 efectivamente dividió el sistema en cinco fondos. Las tres líneas punteadas marcan las ventanas de crisis analizadas abajo — 2008 y 2020 se ven como caídas bruscas y visibles en el Fondo A que el Fondo E apenas registra; 2022 es un desgaste más lento que ambos fondos sienten.
 
@@ -54,7 +54,15 @@ Un "contrafactual" acá solo significa: tomo dos decisiones distintas que un afi
 
 (El "costo del pánico", en puntos, es simplemente el porcentaje de SE QUEDA menos el de PÁNICO — p. ej. en la primera fila, quedarse perdió 4,5%, pero el pánico perdió 28,7%, una brecha de **24,2 puntos porcentuales** entre las dos decisiones en los mismos 2 años.)
 
-![Costo de cambiarse en pánico por escenario](outputs/figures/panic_switch_cost.png)
+![Por qué moverse en el piso cuesta](outputs/figures/mecanismo_covid.png)
+
+El mecanismo, sobre la caída de 2020. El Fondo A cae 23% y el Fondo E casi no se mueve —
+que es justamente por qué huir se siente correcto en ese momento. El costo no se paga el
+día del cambio: se paga en el año siguiente, cuando el Fondo A vuelve a +15% y el Fondo E
+termina más o menos donde empezó. Se materializa la caída y después uno se pierde la
+recuperación.
+
+![Distribución de los 15 escenarios sistemáticos](outputs/figures/distribucion_escenarios.png)
 
 **Hallazgo honesto, no elegido a dedo**: el escenario 2022 muestra un costo casi nulo, y quiero ser directo en que esto no se filtró para que la historia se viera más limpia — es la misma metodología aplicada a un cuarto período real, y resulta que contradice a los otros tres. La razón, en simple: la crisis de 2022 fue un reajuste lento y sostenido impulsado por el alza de tasas y la inflación, no una caída-y-rebote brusca. Los bonos (lo que el Fondo E tiene mayoritariamente) *también* se vendieron ese año porque el alza de tasas también les pega a los bonos — así que huir a E no esquivó mucho dolor, y como el Fondo A nunca protagonizó una recuperación brusca en V después, tampoco hubo un rebote perdido que pagar. La conclusión no es "cambiarse en pánico siempre cuesta ~25 puntos" — es que el costo es específico a cierta *forma* de crisis (una caída brusca seguida de una recuperación brusca), que es exactamente lo que fueron 2008 y COVID, y lo que 2022 no fue.
 
@@ -90,6 +98,52 @@ python analysis/systematic_panic_switch_cost.py     # -> reports/systematic_pani
 
 Los 15 escenarios sistemáticos favorecieron quedarse — no solo las 3 crisis más conocidas, en todos los rezagos probados. Es una versión más robusta y mecánicamente derivada de la misma conclusión que apuntaban los 4 escenarios elegidos a mano, no una distinta — pero ahora respaldada por cada crisis real que califica en el dataset, no por cuatro elegidas a dedo. Números completos por escenario en `reports/systematic_panic_switch_results.csv`; números agregados en `reports/systematic_panic_switch_summary.json`.
 
+## "¿Y si me hubiera cambiado *antes*?" — dónde se da vuelta el consejo
+
+Todo lo de arriba fija el cambio **en el piso**, que es lo que significa pánico: huir
+después de que la caída ya ocurrió. Pero un lector razonable hace la pregunta obvia:
+*¿y si me hubiera movido cuando recién empezaba a caer?*
+
+`analysis/timing_grid.py` la responde, con una decisión de diseño que hace todo el trabajo.
+
+**La variable no es el calendario, es la pérdida ya sufrida.** Barrer por "días antes del
+piso" da un resultado tan cierto como inútil: cambiarse una semana después del techo de
+2007 gana 90 puntos, porque esquiva el crash entero. Pero nadie sabe que está parado en el
+techo — esa combinación mide presciencia, no pánico. Lo que una persona sí observa el día
+que decide es cuánto perdió hasta ahí. Así que la grilla se indexa por la caída acumulada
+al momento del cambio, lo que convierte la pregunta en una accionable: **si ya perdí X%,
+¿todavía conviene moverme?**
+
+481 combinaciones de (día del cambio × plazo de retorno) sobre las 3 caídas reales:
+
+![Dónde deja de servir cambiarse](outputs/figures/punto_de_quiebre.png)
+
+| Pérdida ya sufrida al cambiarse | n | Costo mediano de cambiarse | Gana cambiarse |
+|---|---:|---:|---:|
+| 0% a −5% | 145 | **−14,0 pp** | 100% |
+| −5% a −10% | 123 | **−18,2 pp** | 94% |
+| −10% a −20% | 159 | **−10,1 pp** | 74% |
+| −20% a −30% | 19 | **+2,9 pp** | 42% |
+| más de −30% | 35 | **+16,2 pp** | 29% |
+
+**El punto de quiebre está en torno al −25% ya perdido.** Por debajo, moverse todavía
+ayudó en estas caídas; pasado ese punto, costó — y el análisis original anclado al piso es
+simplemente el caso extremo de esa última fila, porque cambiarse en el piso es cambiarse
+habiendo absorbido el 100% de la caída.
+
+Tres advertencias, porque este resultado es fácil de leer mal:
+
+- **No es una estrategia.** Una zona donde cambiarse gana no es una zona que se pueda
+  ocupar: ganar ahí exige saber que la caída va a continuar, que es justo lo que no se sabe
+  en el momento. El umbral sirve en la dirección contraria — para decirle a alguien que ya
+  perdió mucho que moverse ahora no lo salva.
+- **Tres episodios, no tres mil.** Los porcentajes describen estas crisis. El balde de
+  −20% a −30% se apoya en 19 combinaciones provenientes del mismo puñado de caídas, así que
+  ese 42% pesa muchísimo menos que el 100% de la primera fila.
+- **Los baldes no son observaciones independientes.** Las combinaciones dentro de un mismo
+  episodio comparten la misma trayectoria de mercado, así que la muestra efectiva se parece
+  más a 3 que a 481.
+
 ## Calcula tu propio escenario
 
 `scripts/calculator.py` es una calculadora de línea de comandos interactiva: elegí una de las caídas reales detectadas arriba (o ingresá tus propias fechas), elegí a qué fondo te cambiarías en pánico y cuántos meses antes de volver, y calcula el costo histórico real contra los mismos datos que todo lo de arriba — no una regla general.
@@ -104,7 +158,7 @@ Todo lo anterior responde "cuánto costaría si alguien se cambiara en pánico" 
 
 **Una segunda trampa real de calidad de datos, esta vez en los propios PDF fuente**: la tabla (`Tabla N° 7`) que reporta este número tiene una nota al pie escrita en prosa — *"...traspasadas entre AFP en agosto de 2020 fue de..."* — y en al menos dos de los 22 boletines revisados, esa prosa nombra el mes equivocado (un mes de diferencia en un caso, un año en otro) respecto a lo que dicen los propios encabezados de columna de la tabla. `etl/parse_traspasos.py` no confía en la prosa de la nota al pie para el mes — deriva el mes del encabezado de la tabla (corroborado por todas las demás columnas de esa misma tabla), y solo toma el número de traspasos de la nota al pie. `tests/test_parse_traspasos.py` fija este error exacto con un fixture sintético que lo reproduce.
 
-![Volumen mensual real de traspasos entre AFP](outputs/figures/traspasos_volume.png)
+![Volumen mensual real de traspasos entre AFP](outputs/figures/traspasos_volumen.png)
 
 **Esta es la sorpresa honesta de todo el proyecto**: el volumen de traspasos *no* se dispara en el valle de COVID — *colapsa*, de ~53.000 cuentas/mes a comienzos de 2020 a solo 15.618 en mayo de 2020, para luego rebotar bruscamente a ~50.000 en octubre de 2020. Eso no es evidencia de que la gente no estuviera en pánico — Chile estuvo en cuarentena estricta desde fines de marzo de 2020, las visitas a sucursales de AFP estaban restringidas, y parte del proceso de traspaso todavía no era completamente digital en ese momento, así que el colapso está confundido con la imposibilidad literal de la gente de procesar un cambio, no con que no quisieran hacerlo. El rebote de octubre de 2020 coincide con la flexibilización de la cuarentena y con la controversia política por la primera ley de retiro de fondos previsionales (aprobada en julio de 2020), que puso a las AFP en la contingencia diaria — plausiblemente un gatillo conductual más grande que la propia caída de marzo. La ventana de 2022, en cambio, no muestra ningún movimiento dramático cerca del valle de octubre — consistente con el costo de pánico de ~0 puntos encontrado para ese escenario más arriba: si cambiarse apenas habría costado algo, hay poca razón para esperar un salto en los cambios tampoco.
 
@@ -121,6 +175,7 @@ python etl/parse_traspasos.py                 # -> data/processed/traspasos_mont
 python etl/build_duckdb.py                    # -> data/pension_funds.duckdb
 python analysis/panic_switch_cost.py          # -> reports/panic_switch_results.csv
 python analysis/systematic_panic_switch_cost.py  # -> reports/systematic_panic_switch_results.csv + summary.json
+python analysis/timing_grid.py                # -> reports/timing_grid.csv
 python scripts/make_charts.py                 # -> outputs/figures/*.png
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (no commiteado, ver arriba)
 python scripts/calculator.py                  # interactivo: tu propio escenario de cambio en pánico

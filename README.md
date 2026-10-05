@@ -32,7 +32,7 @@ Before trusting a number I computed, I checked it against two crashes that anyon
 
 ("Drawdown" here just means: how far did the index fall from its high point to its low point during that crisis, in percent.) Both numbers match the magnitude of those crashes as publicly reported at the time. That Fondo A (up to 80% stocks) dropped ~25-30% while Fondo E (mostly bonds) barely moved isn't a coincidence — it's exactly the risk-profile difference the multifondo system was designed to produce, and seeing the data reproduce it independently is what tells me the index-building logic above is actually correct, not just plausible-looking.
 
-![Fund A vs Fund E, full history](outputs/figures/fund_a_vs_e_history.png)
+![Fund A vs Fund E, full history](outputs/figures/fondo_a_vs_e_historia.png)
 
 Log scale, patrimonio-weighted index, base 100 at each fund's earliest available date. Fondo C and E have data back to 2002-01-02 (the original pre-reform single-fund lineage); A, B and D start 2002-09-28, when the 2002 multifondo reform actually split the system into five funds. The three dashed lines mark the crisis windows analyzed below — 2008 and 2020 show up as sharp, visible drops in Fondo A that Fondo E barely registers; 2022 is a slower grind that both funds feel.
 
@@ -54,7 +54,14 @@ A "counterfactual" here just means: I take two different decisions a saver could
 
 ("Cost of panic," in points, is just the STAY percentage minus the PANIC percentage — e.g. in the first row, staying lost 4.5%, but panicking lost 28.7%, a **24.2 percentage-point** gap between the two choices over the same 2 years.)
 
-![Cost of panic-switching by scenario](outputs/figures/panic_switch_cost.png)
+![Why switching at the trough costs](outputs/figures/mecanismo_covid.png)
+
+The mechanism, on the 2020 crash. Fund A falls 23% and Fund E barely moves — which is
+exactly why fleeing feels right at that moment. The cost is not paid on the day of the
+switch: it is paid over the following year, when Fund A climbs back to +15% and Fund E
+ends roughly where it started. You materialise the fall and then sit out the recovery.
+
+![Distribution of the 15 systematic scenarios](outputs/figures/distribucion_escenarios.png)
 
 **Honest finding, not cherry-picked**: the 2022 scenario shows almost no cost, and I want to be upfront that this wasn't filtered out to make the story cleaner — it's the same methodology applied to a fourth real period, and it happens to disagree with the other three. Here's why, in plain terms: 2022's crisis was a slow, grinding repricing driven by rising interest rates and inflation, not a sharp drop-then-bounce. Bonds (what Fondo E mostly holds) *also* sold off that year because rising rates hurt bond prices too — so fleeing to E didn't actually dodge much pain, and because Fondo A never staged a sharp V-shaped recovery afterward, there was no missed rebound to pay for either. The takeaway isn't "panic-switching always costs ~25 points" — it's that the cost is specific to a certain *shape* of crisis (a sharp fall followed by a sharp recovery), which is exactly what 2008 and COVID were, and what 2022 wasn't.
 
@@ -90,6 +97,51 @@ python analysis/systematic_panic_switch_cost.py     # -> reports/systematic_pani
 
 Every one of the 15 systematic scenarios favored staying — not just the 3 headline crashes, across every return lag tested. That's a stronger, more mechanically-derived version of the same conclusion the 4 hand-picked scenarios pointed to, not a different one — but now it's backed by every qualifying real crash in the dataset instead of a curated four. Full per-scenario numbers in `reports/systematic_panic_switch_results.csv`; aggregate numbers in `reports/systematic_panic_switch_summary.json`.
 
+## "And what if I had moved *earlier*?" — where the advice flips
+
+Everything above fixes the switch **at the trough**, which is what panic means: you flee
+after the fall has already happened. But a reasonable reader asks the obvious follow-up —
+*what if I had moved when it had only dropped a little?*
+
+`analysis/timing_grid.py` answers it, with one design decision that does the real work.
+
+**The variable is not the calendar, it is the loss already suffered.** Sweeping by "days
+before the trough" produces a result that is true and useless: switching a week after the
+2007 peak wins by 90 points, because it dodges the entire crash. But nobody knows they are
+standing on the peak — that combination measures foresight, not panic. What a person *can*
+observe on the day they decide is how much they have lost so far. So the grid is indexed by
+drawdown-at-switch, which turns the question into an actionable one: **if I have already
+lost X%, does moving still help?**
+
+481 combinations of (switch day × return lag) across the 3 real drawdowns:
+
+![Where switching stops helping](outputs/figures/punto_de_quiebre.png)
+
+| Loss already suffered when switching | n | Median cost of switching | Switching wins |
+|---|---:|---:|---:|
+| 0% to −5% | 145 | **−14.0 pp** | 100% |
+| −5% to −10% | 123 | **−18.2 pp** | 94% |
+| −10% to −20% | 159 | **−10.1 pp** | 74% |
+| −20% to −30% | 19 | **+2.9 pp** | 42% |
+| more than −30% | 35 | **+16.2 pp** | 29% |
+
+**The break-even sits around −25% of loss already taken.** Below it, moving still helped in
+these crashes; past it, it cost — and the original trough-anchored analysis is simply the
+extreme case of that last row, since switching at the trough means switching having
+absorbed 100% of the fall.
+
+Three caveats, because this result is easy to misread:
+
+- **It is not a strategy.** A region where switching wins is not a region you can occupy:
+  winning there requires knowing the fall will continue, which is exactly what is unknown
+  at the time. The threshold is useful in the other direction — telling someone who has
+  already lost a lot that moving now will not save them.
+- **Three episodes, not three thousand.** The percentages describe these crises. The
+  −20% to −30% bucket rests on 19 combinations drawn from the same handful of crashes, so
+  the 42% there carries far less weight than the 100% in the first row.
+- **The buckets are not independent observations.** Combinations within one episode share
+  the same market path, so the effective sample is closer to 3 than to 481.
+
 ## Calculate your own scenario
 
 `scripts/calculator.py` is an interactive command-line calculator: pick one of the real detected drawdown episodes above (or type your own dates), choose which fund you'd panic-switch into and how many months before you'd move back, and it computes the real historical cost against the same data as everything above — not a rule of thumb.
@@ -104,7 +156,7 @@ Everything above answers "what would it cost if someone panic-switched" — it's
 
 **A second real data-quality trap, in the source PDFs themselves**: the table (`Tabla N° 7`) that reports this number has a footnote written in prose — *"...traspasadas entre AFP en agosto de 2020 fue de..."* — and in at least two of the 22 bulletins checked, that prose names the wrong month (off by a month, in one case off by a year) relative to what the table's own column headers say. `etl/parse_traspasos.py` doesn't trust the footnote's prose for the month — it derives the month from the table's header row instead (which is corroborated by every other column on the same table), and only takes the transfer count itself from the footnote. `tests/test_parse_traspasos.py` locks in this exact bug with a synthetic fixture reproducing it.
 
-![Real monthly transfer volume between AFPs](outputs/figures/traspasos_volume.png)
+![Real monthly transfer volume between AFPs](outputs/figures/traspasos_volumen.png)
 
 **This is the honest surprise of the whole project**: transfer volume does *not* spike at the COVID trough — it *collapses*, from ~53,000 accounts/month in early 2020 down to just 15,618 in May 2020, before rebounding sharply to ~50,000 in October 2020. That's not evidence people weren't panicking — Chile was under strict lockdown from late March 2020, AFP branch visits were restricted, and part of the transfer process wasn't fully digital yet at the time, so the collapse is confounded with people's literal inability to process a switch, not proof they didn't want to. The October 2020 rebound lines up with lockdown easing and with the political controversy around the first pension-fund withdrawal law (passed July 2020) putting AFPs in the daily news — plausibly a bigger behavioral trigger than the March crash itself. The 2022 window, by contrast, shows no dramatic move around the October trough at all — consistent with the ~0-point panic cost found for that scenario above: if switching barely would have cost anything, there's little reason to expect a spike in switching either.
 
@@ -121,6 +173,7 @@ python etl/parse_traspasos.py              # -> data/processed/traspasos_monthly
 python etl/build_duckdb.py                 # -> data/pension_funds.duckdb
 python analysis/panic_switch_cost.py       # -> reports/panic_switch_results.csv
 python analysis/systematic_panic_switch_cost.py  # -> reports/systematic_panic_switch_results.csv + summary.json
+python analysis/timing_grid.py             # -> reports/timing_grid.csv
 python scripts/make_charts.py              # -> outputs/figures/*.png
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (not committed, see above)
 python scripts/calculator.py               # interactive: your own panic-switch scenario
