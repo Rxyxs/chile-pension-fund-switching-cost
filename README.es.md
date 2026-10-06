@@ -12,13 +12,75 @@
 
 | | |
 |---|---|
-| **Cambiarse en el piso cuesta caro, casi siempre** | En 2.000 historias sintéticas de 24 años, cambiarse al E en el mínimo de la caída costó en el 97% de los casos (mediana +17,8 puntos en el año siguiente). Para un afiliado de 50 años, eso es entre 13,3% y 18,5% de la pensión, y es permanente. |
-| **Pero el piso solo se conoce después** | Nadie sabe que está en el piso. Con una regla que alguien sí podría seguir —cambiarse al cruzar −15% de pérdida— el costo baja a una mediana de +3,4 puntos y ocurre en el 59% de los casos: una moneda al aire con un leve sesgo en contra. El "15 de 15 favorecen quedarse" de la primera versión de este análisis era, en buena parte, ese sesgo de retrospectiva. |
-| **No hay una regla que gane de forma confiable** | Los retornos mensuales no son predecibles (AR(1), p = 0,53). La volatilidad sí lo es, pero detecta tormentas, no su dirección. Salir cuando un modelo de régimen detecta turbulencia "ganaba" entre 1,4% y 2,3% al año… hasta quitarle la información del futuro: fuera de muestra y con el rezago real de un traspaso, rinde 0,2% al año menos que quedarse. |
-| **En poder adquisitivo, la historia es otra** | Deflactado por la UF, la crisis de 2008 dejó al Fondo A bajo el agua hasta 2014, no hasta 2010. Y 2021–23, que en pesos fue una caída de 14,6% que "no califica", fue en UF una pérdida de 26%: la segunda peor de los 24 años. |
-| **El refugio también cae** | El Fondo E protegió en 10 de las 12 tormentas en que cayó el A. Pero tiene su propio riesgo, el de tasas e inflación: perdió 13,1% real en 2021 y lleva −10,5% real en 2026. |
+| **Cambiarse en el piso destruye valor en todos los indicadores** | En 2.000 historias sintéticas, le resta 1,92 pp al retorno real anual (IC 90%: −3,99 a −0,18), empeora el Sharpe en 0,14 y no reduce la caída máxima. A los 50 años baja la tasa de reemplazo entre 8,2 y 10,3 puntos: entre $100.000 y $127.000 de pensión al mes, para siempre. |
+| **Cambiarse temprano no destruye valor, pero tampoco agrega** | La regla de cambiarse al cruzar −15% no mueve el retorno esperado (ΔCAGR −0,12 pp/año, IC 90% de −2,37 a +2,21), baja la volatilidad en todas las historias y la caída máxima en el 70%. Pero frente a una mezcla fija con la misma exposición promedio al Fondo E, su ventaja es cero (ΔSharpe +0,00). No es timing: es tener menos renta variable. |
+| **La historia real fue una tirada favorable** | Entre 2006 y 2026 la regla −15% rindió 5,80% real anual contra 4,08% de quedarse, con una caída máxima de −30,6% contra −48,3%. Ese resultado cae en el percentil 90 de las 2.000 historias simuladas. |
+| **Si el miedo es la caída, la palanca es el fondo, no el momento** | El Fondo C tiene el mejor Sharpe de los cinco con cualquier tasa real libre de riesgo entre 0% y 2%. Y el E no es refugio en poder adquisitivo: su caída máxima real (−24,1%) es igual a la del C, y lleva 67 meses bajo el agua. |
+| **Anticipar caídas no funciona** | Los retornos mensuales no son predecibles (AR(1), p = 0,53). Un modelo de régimen que "ganaba" entre 1,4 y 2,3 pp/año con parámetros que conocían el futuro empata en Sharpe con una mezcla fija 40/60 cuando se estima fuera de muestra. |
+| **En poder adquisitivo, la historia es otra** | Deflactado por la UF, 2021–23 fue una caída de 26%, que en pesos fue de 14,6% y no calificaba. La crisis de 2008 dejó al Fondo A 82 meses bajo el agua. |
 
 El resto del documento muestra cómo se llegó a cada fila, incluidos los errores que cometí en el camino y cómo quedaron fijados con tests.
+
+## Indicadores clave (KPIs)
+
+`analysis/kpis.py` evalúa fondos, estrategias y pensiones con los indicadores estándar de la industria, todos en términos reales (UF). Sharpe con tres tasas libres de riesgo reales en vez de esconder el supuesto en una sola cifra, porque el orden de los fondos **cambia** con la tasa; CVaR al 95% como la pérdida media en el 5% de los peores meses; anualización con los ~261 días hábiles por año que tiene la serie, no con 252 fijos.
+
+**Fondos, 2002–2026** (retornos diarios hábiles):
+
+| Fondo | CAGR real | Volatilidad | Sharpe rf 0% | Sharpe rf 1% | Sharpe rf 2% | Sortino | Caída máxima | Meses bajo el agua | Calmar | CVaR 95% mensual | Peor 12 meses |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 5,85% | 10,2% | 0,61 | 0,51 | 0,41 | 0,84 | −48,5% | 82 | 0,12 | 8,0% | −45,1% |
+| B | 5,01% | 7,5% | 0,69 | 0,55 | 0,42 | 0,95 | −37,1% | 38 | 0,13 | 6,0% | −34,2% |
+| C | 4,24% | 5,3% | **0,81** | **0,62** | **0,43** | **1,14** | −24,3% | 33 | **0,17** | 4,5% | −22,5% |
+| D | 3,26% | 4,3% | 0,76 | 0,53 | 0,30 | 1,08 | −22,1% | 67 | 0,15 | 4,0% | −14,7% |
+| E | 2,92% | 4,2% | 0,70 | 0,47 | 0,23 | 1,01 | −24,1% | 67 | 0,12 | 3,8% | −16,5% |
+
+Con tasa 0% el orden por Sharpe es C > D > E > B > A; con 2%, C > B > A > D > E. Lo único robusto es que **el Fondo C tiene el mejor retorno ajustado por riesgo** (y como el Sharpe es lineal en la tasa, lo es para cualquier tasa entre 0% y 2%). El Fondo E tiene una caída máxima real igual a la del C, desde febrero de 2021 y todavía sin recuperarse.
+
+**Estrategias, historia real** (retornos semanales; ventana común de octubre de 2006 a octubre de 2026, desde la primera semana con señal de régimen fuera de muestra). Cada regla va seguida de su **benchmark justo**: una mezcla fija A/E con la misma exposición promedio al Fondo E, rebalanceada cada semana. Comparar una regla que pasa el 60% del tiempo en el E contra "100% en A" confunde timing con bajar la exposición.
+
+| Estrategia | CAGR real | Volatilidad | Sharpe | Caída máxima | Calmar | Tiempo en E | Decisiones | Acierto | Payoff |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Quedarse en A | 4,08% | 12,1% | 0,39 | −48,3% | 0,08 | 0% | — | — | — |
+| Siempre en E | 2,42% | 5,6% | 0,46 | −23,0% | 0,11 | 100% | — | — | — |
+| **Regla −15%** | **5,80%** | 10,2% | **0,60** | **−30,6%** | **0,19** | 15% | 3 | 67% | 0,86 |
+| ↳ mezcla fija 85% A / 15% E | 3,94% | 10,4% | 0,42 | −42,8% | 0,09 | 15% | — | — | — |
+| **Régimen fuera de muestra** | 3,85% | 7,4% | 0,55 | −23,0% | 0,17 | 60% | 12 | 42% | 1,18 |
+| ↳ mezcla fija 40% A / 60% E | 3,29% | 6,2% | 0,56 | −23,3% | 0,14 | 60% | — | — | — |
+| Piso (retrospectiva, no ejecutable) | 0,11% | 10,9% | 0,07 | −48,4% | 0,00 | 15% | 3 | 0% | — |
+
+*Acierto*: decisiones en que el E rindió más que el A mientras se estuvo afuera. *Payoff*: ganancia media al acertar dividida por la pérdida media al fallar; con un payoff menor que 1 hace falta acertar más de la mitad de las veces solo para empatar.
+
+![Estrategias en el plano retorno-riesgo](outputs/figures/kpis_estrategias.png)
+
+**La regla contra quedarse, en 2.000 historias** (mismo bootstrap estacionario de la sección del piso; media e intervalo central del 90%):
+
+| | Regla −15% vs. quedarse | Regla −15% vs. mezcla equivalente | Piso vs. quedarse | Piso vs. mezcla equivalente |
+|---|---|---|---|---|
+| ΔCAGR (pp/año) | −0,12 [−2,37; +2,21] | +0,22 [−1,71; +2,33] | −1,92 [−3,99; −0,18] | −1,59 [−3,48; 0,00] |
+| ΔSharpe | +0,03 [−0,16; +0,25] | +0,00 [−0,20; +0,23] | −0,14 [−0,30; 0,00] | −0,17 [−0,35; −0,01] |
+| ΔCaída máxima (pp; + = menor) | +6,47 [−7,38; +24,02] | +2,28 [−11,83; +19,90] | −3,52 [−12,73; 0,00] | −7,15 [−17,63; −1,40] |
+| Historias en que mejora el Sharpe | 58% | 48% | 2% | 1% |
+
+![KPIs en 2.000 historias](outputs/figures/kpis_bootstrap.png)
+
+**Pensión: tasa de reemplazo** (pensión dividida por el último sueldo, de 29,8 UF). Como el modelo cotiza todos los meses, el nivel es un techo: con una densidad de cotización *d*, la tasa es *d* veces la reportada. La caída en puntos porcentuales de la pensión no cambia con la densidad si las lagunas se reparten parejo.
+
+| Caída | Edad | Si se queda | Si se cambia en el piso | Δ | Si se cambia al cruzar −15% | Δ |
+|---|---:|---:|---:|---:|---:|---:|
+| GFC 2008 | 30 | 60,4% | 57,3% | −3,1 pp | 66,6% | +6,2 pp |
+| GFC 2008 | 50 | 56,0% | 45,7% | **−10,3 pp** | 80,3% | +24,3 pp |
+| COVID 2020 | 30 | 66,1% | 63,1% | −3,0 pp | 63,1% | −3,0 pp |
+| COVID 2020 | 50 | 60,8% | 52,2% | **−8,6 pp** | 52,2% | −8,6 pp |
+| Inflación 2021–23 | 30 | 67,0% | 64,2% | −2,9 pp | 70,3% | +3,3 pp |
+| Inflación 2021–23 | 50 | 61,6% | 53,4% | **−8,2 pp** | 72,8% | +11,2 pp |
+
+**Lectura:**
+
+1. **Cambiarse tarde es la única decisión que los KPIs condenan sin ambigüedad**: peor CAGR, peor Sharpe y no reduce la caída, ni frente a quedarse ni frente a una mezcla equivalente.
+2. **Cambiarse temprano es reducción de riesgo con costo esperado cero**, pero no agrega nada que no logre una mezcla fija con la misma exposición. No hay timing; hay menos renta variable.
+3. **El buen resultado de la regla −15% en 2006–2026 es el percentil 90** de lo que el bootstrap considera posible: una historia favorable, no una propiedad de la regla. La de régimen rinde 0,56 pp/año más que su mezcla 40/60, pero con 1,3 pp más de volatilidad: el mismo Sharpe.
+4. **Si la preocupación es la caída, la palanca es el fondo**: el C tiene el mejor Sharpe de los cinco, y una mezcla fija se elige una vez y no exige adivinar nada.
 
 ## Los datos reales — y qué significa "ponderado por patrimonio"
 
@@ -331,13 +393,15 @@ Cambiarse al E no es salir del riesgo. Es cambiar un riesgo por otro.
 
 **Se puede afirmar:**
 
-- Cambiarse al Fondo E en el piso de una caída cuesta caro casi siempre (97% de las historias sintéticas), y a un afiliado de 50 o 60 años le quita entre 13,1% y 18,5% de la pensión, de forma permanente.
+- Cambiarse al Fondo E en el piso de una caída destruye valor en todos los indicadores: −1,92 pp de retorno real anual (IC 90% de −3,99 a −0,18), peor Sharpe, sin reducir la caída máxima. A un afiliado de 50 años le quita entre 8,2 y 10,3 puntos de tasa de reemplazo, de forma permanente.
+- Cambiarse temprano (al cruzar −15%) no tiene costo esperado y baja el riesgo, pero no más que una mezcla fija con la misma exposición al Fondo E.
 - Los retornos mensuales del Fondo A no son predecibles, y una estrategia basada en detectar turbulencia no tiene ventaja una vez que se le quita la información del futuro.
+- El Fondo C tiene el mejor retorno ajustado por riesgo de los cinco con cualquier tasa real libre de riesgo entre 0% y 2%.
 - Medido en poder adquisitivo, el sistema tuvo una caída de 26% en 2021–23 que el análisis en pesos no registra.
 
 **No se puede afirmar:**
 
-- Que cambiarse temprano sea un error. Es una moneda al aire con un leve sesgo en contra (costó en el 59% de las historias), y en la historia real habría ganado dos de tres veces.
+- Que cambiarse temprano sea un error, ni que sea una estrategia: en la historia real le ganó a quedarse, pero ese resultado es el percentil 90 de lo posible, y en promedio equivale a una mezcla fija.
 - Que esto describa lo que la gente hizo de verdad. El volumen de traspasos de 2020 no se disparó en el piso (ver más abajo), así que el escenario "cambio en el piso" es una hipótesis sobre el comportamiento, no una observación.
 
 ## Calcula tu propio escenario
@@ -377,10 +441,11 @@ python analysis/timing_grid.py                # -> reports/timing_grid.csv
 python analysis/pension_loss.py               # -> reports/pension_loss.csv (pérdida en la pensión, por edad)
 python analysis/time_series.py                # -> reports/time_series_summary.json + ts_*.csv (~30 s)
 python analysis/bootstrap_cost.py             # -> reports/bootstrap_cost.json (2.000 historias x 3 bloques, ~15 s)
-python scripts/make_charts.py                 # -> outputs/figures/*.png (11 figuras)
+python analysis/kpis.py                       # -> reports/kpis.json + kpis_*.csv (fondos, estrategias, pensión; ~25 s)
+python scripts/make_charts.py                 # -> outputs/figures/*.png (13 figuras)
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (no commiteado, ver arriba)
 python scripts/calculator.py                  # interactivo: tu propio escenario de cambio en pánico
-pytest tests/ -v                              # 56 tests, sin necesidad de red (fixtures sintéticas)
+pytest tests/ -v                              # 65 tests, sin necesidad de red (fixtures sintéticas)
 ```
 
 ## Próximos pasos

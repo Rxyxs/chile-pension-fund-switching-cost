@@ -89,10 +89,10 @@
 </header>
 
 <div class="kpis">
-  <div class="kpi cost"><div class="n">97%</div><div class="l">de las veces costó cambiarse en el piso, en 2.000 historias sintéticas</div></div>
-  <div class="kpi"><div class="n">59%</div><div class="l">si en cambio te cambias al cruzar −15%: casi una moneda al aire</div></div>
-  <div class="kpi cost"><div class="n">−18,5%</div><div class="l">de la pensión pierde alguien de 50 años que se cambió en el piso de 2008</div></div>
-  <div class="kpi"><div class="n">−26%</div><div class="l">cayó el poder adquisitivo del Fondo A en 2021–23; en pesos no se nota</div></div>
+  <div class="kpi cost"><div class="n">−1,92 pp</div><div class="l">de retorno real anual cuesta cambiarse en el piso (IC 90%: −3,99 a −0,18)</div></div>
+  <div class="kpi"><div class="n">+0,00</div><div class="l">de Sharpe agrega cambiarse temprano frente a una mezcla fija equivalente</div></div>
+  <div class="kpi cost"><div class="n">−10,3 pp</div><div class="l">de tasa de reemplazo a los 50 años, por cambiarse en el piso de 2008</div></div>
+  <div class="kpi stay"><div class="n">0,81</div><div class="l">Sharpe del Fondo C, el mejor de los cinco con cualquier tasa real de 0% a 2%</div></div>
 </div>
 
 <p>
@@ -171,7 +171,49 @@
   </p>
 </div>
 
-<h2><span class="num">4.</span>¿Y si me hubiera movido antes?</h2>
+<h2><span class="num">4.</span>Los indicadores</h2>
+<p>
+  Los mismos resultados, en los indicadores con que se evalúa un fondo o una estrategia en la
+  industria: todo en términos reales, con el Sharpe reportado a tres tasas libres de riesgo porque
+  el orden de los fondos cambia con la tasa.
+</p>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Fondo, 2002–2026</th><th>CAGR real</th><th>Volatilidad</th><th>Sharpe rf 0% / 1% / 2%</th><th>Caída máxima</th><th>Meses bajo el agua</th><th>CVaR 95% mensual</th></tr></thead>
+  <tbody>
+    <tr><td>A</td><td>5,85%</td><td>10,2%</td><td>0,61 / 0,51 / 0,41</td><td>−48,5%</td><td>82</td><td>8,0%</td></tr>
+    <tr><td>B</td><td>5,01%</td><td>7,5%</td><td>0,69 / 0,55 / 0,42</td><td>−37,1%</td><td>38</td><td>6,0%</td></tr>
+    <tr><td>C</td><td>4,24%</td><td>5,3%</td><td class="neg">0,81 / 0,62 / 0,43</td><td>−24,3%</td><td>33</td><td>4,5%</td></tr>
+    <tr><td>D</td><td>3,26%</td><td>4,3%</td><td>0,76 / 0,53 / 0,30</td><td>−22,1%</td><td>67</td><td>4,0%</td></tr>
+    <tr><td>E</td><td>2,92%</td><td>4,2%</td><td>0,70 / 0,47 / 0,23</td><td>−24,1%</td><td>67</td><td>3,8%</td></tr>
+  </tbody>
+</table>
+</div>
+<p>
+  El Fondo C tiene el mejor retorno ajustado por riesgo con cualquier tasa. Y el E no es refugio en
+  poder adquisitivo: su caída máxima real es igual a la del C y lleva 67 meses sin recuperarse.
+</p>
+<p>
+  Para las estrategias, el benchmark justo no es "100% en A" sino una <strong>mezcla fija con la
+  misma exposición promedio al Fondo E</strong>. Si la mezcla logra lo mismo, la regla no aporta
+  timing: solo baja la exposición.
+</p>
+<figure>
+  <img src="figures/kpis_estrategias.png" alt="Estrategias en el plano retorno-riesgo, frente a las mezclas fijas de A y E">
+</figure>
+<figure>
+  <img src="figures/kpis_bootstrap.png" alt="Diferencias de CAGR, Sharpe y caída máxima de cada regla en 2.000 historias">
+</figure>
+<div class="callout">
+  <p>
+    <strong>Cambiarse tarde destruye valor en todos los indicadores</strong>, contra quedarse y contra
+    una mezcla equivalente. <strong>Cambiarse temprano no lo destruye, pero tampoco agrega</strong>:
+    equivale a tener un poco menos de renta variable todo el tiempo. El buen resultado de la regla
+    −15% entre 2006 y 2026 cae en el percentil 90 de las 2.000 historias: fue una historia favorable.
+  </p>
+</div>
+
+<h2><span class="num">5.</span>¿Y si me hubiera movido antes?</h2>
 <p>
   Barrer por "días antes del piso" da una respuesta tan cierta como inútil: cambiarse una semana
   después del techo de 2007 gana 90 puntos porque esquiva el crash entero. Pero <strong>nadie
@@ -199,7 +241,7 @@
   de las mismas crisis, así que ese 42% pesa mucho menos que el 100% de la primera fila.
 </p>
 
-<h2><span class="num">5.</span>¿Se puede anticipar una caída?</h2>
+<h2><span class="num">6.</span>¿Se puede anticipar una caída?</h2>
 <p>
   Todo el argumento descansa en que nadie sabe si la caída va a seguir, así que lo puse a prueba.
   Los retornos mensuales del Fondo A no tienen autocorrelación (AR(1) +0,07, p = 0,53). La
@@ -224,7 +266,7 @@
   </p>
 </div>
 
-<h2><span class="num">6.</span>En poder adquisitivo, la historia es otra</h2>
+<h2><span class="num">7.</span>En poder adquisitivo, la historia es otra</h2>
 <p>
   El valor cuota está en pesos, y cada retorno lleva unos 3,8 puntos de inflación anual adentro.
   Deflactado por la UF:
@@ -238,7 +280,7 @@
   la inflación de 2022 encima de la caída del mercado.
 </p>
 
-<h2><span class="num">7.</span>El refugio también cae</h2>
+<h2><span class="num">8.</span>El refugio también cae</h2>
 <figure>
   <img src="figures/fondo_e_anual.png" alt="Retorno real anual del Fondo E">
 </figure>
@@ -248,7 +290,7 @@
   real en 2026. Cambiarse al E no es salir del riesgo; es cambiar un riesgo por otro.
 </p>
 
-<h2><span class="num">8.</span>La sorpresa: la gente no se cambia en el piso</h2>
+<h2><span class="num">9.</span>La sorpresa: la gente no se cambia en el piso</h2>
 <p>
   Todo lo anterior responde <em>cuánto costaría</em> si alguien se cambiara: es un contrafactual
   de precios, no evidencia de que la gente lo haga. Así que fui a buscar el comportamiento real en
@@ -269,7 +311,7 @@
   </p>
 </div>
 
-<h2><span class="num">9.</span>Cuatro trampas reales en los datos</h2>
+<h2><span class="num">10.</span>Cuatro trampas reales en los datos</h2>
 <ul>
   <li>
     <strong>El encabezado del archivo cambia 31 veces.</strong> Qué AFP ocupa qué columna se mueve
@@ -293,7 +335,7 @@
   </li>
 </ul>
 
-<h2><span class="num">10.</span>Córrelo tú</h2>
+<h2><span class="num">11.</span>Córrelo tú</h2>
 <pre><code>pip install -r requirements.txt
 python etl/fetch_valor_cuota.py      # descarga los 5 archivos reales
 python etl/fetch_uf.py && python etl/parse_uf.py
@@ -301,11 +343,12 @@ python etl/build_duckdb.py
 python analysis/pension_loss.py      # la pérdida en la pensión, por edad
 python analysis/bootstrap_cost.py    # 2.000 historias sintéticas
 python analysis/time_series.py       # GARCH, régimen y la señal fuera de muestra
+python analysis/kpis.py              # Sharpe, drawdown, CVaR, tasa de reemplazo
 python scripts/calculator.py         # calculadora interactiva</code></pre>
 <p>
   <code>scripts/calculator.py</code> deja elegir una caída real (o fechas propias), a qué fondo te
   habrías cambiado y cuántos meses después habrías vuelto, y calcula el costo histórico real contra
-  los mismos datos de esta página. Son 56 tests, sin necesidad de red.
+  los mismos datos de esta página. Son 69 tests, sin necesidad de red.
 </p>
 
 <footer>

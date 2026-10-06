@@ -12,13 +12,75 @@ What does it actually cost a Chilean saver to panic-switch pension funds during 
 
 | | |
 |---|---|
-| **Switching at the bottom is expensive, almost always** | Across 2,000 synthetic 24-year histories, moving to Fondo E at the low point of a crash cost money 97% of the time (median +17.8 points over the following year). For a 50-year-old saver, that is between 13.3% and 18.5% of the pension, and it is permanent. |
-| **But the bottom is only known afterwards** | Nobody knows they are at the bottom. With a rule someone could actually follow — switch when the loss crosses −15% — the median cost falls to +3.4 points and the switch costs money 59% of the time: a coin flip with a slight tilt against switching. The "15 out of 15 favour staying" of the first version of this analysis was, to a large extent, that hindsight bias. |
-| **No rule wins reliably** | Monthly returns are not predictable (AR(1), p = 0.53). Volatility is, but it detects storms, not their direction. Exiting when a regime model detects turbulence "earned" 1.4% to 2.3% a year… until the information from the future was removed: out of sample and with a real switch's execution lag, it returns 0.2% a year less than staying put. |
-| **In purchasing power, the story changes** | Deflated by the UF, the 2008 crisis kept Fondo A underwater until 2014, not 2010. And 2021–23, a 14.6% drop in pesos that "doesn't qualify", was a 26% loss in UF terms: the second-worst of the 24 years. |
-| **The safe haven also falls** | Fondo E protected savers in 10 of the 12 storms in which Fondo A fell. But it carries its own risk — rates and inflation: it lost 13.1% in real terms in 2021 and is down 10.5% real in 2026. |
+| **Switching at the bottom destroys value on every indicator** | Across 2,000 synthetic histories it takes 1.92 pp off the real annual return (90% CI: −3.99 to −0.18), lowers the Sharpe ratio by 0.14 and does not reduce the maximum drawdown. At age 50 it cuts the replacement rate by 8.2 to 10.3 points: CLP 100,000 to 127,000 of pension a month, for good. |
+| **Switching early doesn't destroy value, but doesn't add any either** | The rule of switching when the loss crosses −15% leaves the expected return unchanged (ΔCAGR −0.12 pp/yr, 90% CI −2.37 to +2.21), lowers volatility in every history and the maximum drawdown in 70%. But against a static mix with the same average exposure to Fondo E, its edge is zero (ΔSharpe +0.00). It isn't timing: it's holding less equity. |
+| **Real history was a lucky draw** | From 2006 to 2026 the −15% rule returned 5.80% real a year against 4.08% for staying, with a −30.6% maximum drawdown against −48.3%. That result sits at the 90th percentile of the 2,000 simulated histories. |
+| **If the fear is the drawdown, the lever is the fund, not the timing** | Fondo C has the best Sharpe ratio of the five for any real risk-free rate between 0% and 2%. And Fondo E is no safe haven in purchasing power: its real maximum drawdown (−24.1%) matches Fondo C's, and it has been underwater for 67 months. |
+| **Anticipating crashes doesn't work** | Monthly returns are not predictable (AR(1), p = 0.53). A regime model that "earned" 1.4 to 2.3 pp/yr with parameters that knew the future ties a static 40/60 mix on Sharpe once it is estimated out of sample. |
+| **In purchasing power, the story changes** | Deflated by the UF, 2021–23 was a 26% fall, which in pesos was 14.6% and didn't qualify. The 2008 crisis kept Fondo A underwater for 82 months. |
 
 The rest of this document shows how each row was reached, including the mistakes I made along the way and how they are now pinned down by tests.
+
+## Key performance indicators (KPIs)
+
+`analysis/kpis.py` evaluates funds, strategies and pensions with the industry's standard indicators, all in real terms (UF). The Sharpe ratio is reported at three real risk-free rates instead of hiding the assumption in one number, because the ranking of the funds **changes** with the rate; CVaR at 95% is the average loss in the worst 5% of months; annualization uses the ~261 business days a year the series actually has, not a fixed 252.
+
+**Funds, 2002–2026** (daily business-day returns):
+
+| Fund | Real CAGR | Volatility | Sharpe rf 0% | Sharpe rf 1% | Sharpe rf 2% | Sortino | Max drawdown | Months underwater | Calmar | Monthly CVaR 95% | Worst 12 months |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 5.85% | 10.2% | 0.61 | 0.51 | 0.41 | 0.84 | −48.5% | 82 | 0.12 | 8.0% | −45.1% |
+| B | 5.01% | 7.5% | 0.69 | 0.55 | 0.42 | 0.95 | −37.1% | 38 | 0.13 | 6.0% | −34.2% |
+| C | 4.24% | 5.3% | **0.81** | **0.62** | **0.43** | **1.14** | −24.3% | 33 | **0.17** | 4.5% | −22.5% |
+| D | 3.26% | 4.3% | 0.76 | 0.53 | 0.30 | 1.08 | −22.1% | 67 | 0.15 | 4.0% | −14.7% |
+| E | 2.92% | 4.2% | 0.70 | 0.47 | 0.23 | 1.01 | −24.1% | 67 | 0.12 | 3.8% | −16.5% |
+
+At a 0% rate the Sharpe ranking is C > D > E > B > A; at 2%, C > B > A > D > E. The only robust conclusion is that **Fondo C has the best risk-adjusted return** (and since the Sharpe ratio is linear in the rate, it does for any rate between 0% and 2%). Fondo E has the same real maximum drawdown as Fondo C, starting in February 2021 and still not recovered.
+
+**Strategies, real history** (weekly returns; common window from October 2006 to October 2026, from the first week with an out-of-sample regime signal). Each rule is followed by its **fair benchmark**: a static A/E mix with the same average exposure to Fondo E, rebalanced weekly. Comparing a rule that spends 60% of the time in E against "100% in A" mistakes lower exposure for timing.
+
+| Strategy | Real CAGR | Volatility | Sharpe | Max drawdown | Calmar | Time in E | Decisions | Hit rate | Payoff |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Stay in A | 4.08% | 12.1% | 0.39 | −48.3% | 0.08 | 0% | — | — | — |
+| Always in E | 2.42% | 5.6% | 0.46 | −23.0% | 0.11 | 100% | — | — | — |
+| **−15% rule** | **5.80%** | 10.2% | **0.60** | **−30.6%** | **0.19** | 15% | 3 | 67% | 0.86 |
+| ↳ static mix 85% A / 15% E | 3.94% | 10.4% | 0.42 | −42.8% | 0.09 | 15% | — | — | — |
+| **Out-of-sample regime** | 3.85% | 7.4% | 0.55 | −23.0% | 0.17 | 60% | 12 | 42% | 1.18 |
+| ↳ static mix 40% A / 60% E | 3.29% | 6.2% | 0.56 | −23.3% | 0.14 | 60% | — | — | — |
+| Trough (hindsight, not executable) | 0.11% | 10.9% | 0.07 | −48.4% | 0.00 | 15% | 3 | 0% | — |
+
+*Hit rate*: decisions in which E outperformed A while the money was out. *Payoff*: average gain when right divided by average loss when wrong; with a payoff below 1, a rule has to be right more than half the time just to break even.
+
+![Strategies in the risk-return plane](outputs/figures/kpis_estrategias.png)
+
+**The rule against staying, over 2,000 histories** (same stationary bootstrap as in the trough section; mean and central 90% interval):
+
+| | −15% rule vs. staying | −15% rule vs. equivalent mix | Trough vs. staying | Trough vs. equivalent mix |
+|---|---|---|---|---|
+| ΔCAGR (pp/yr) | −0.12 [−2.37, +2.21] | +0.22 [−1.71, +2.33] | −1.92 [−3.99, −0.18] | −1.59 [−3.48, 0.00] |
+| ΔSharpe | +0.03 [−0.16, +0.25] | +0.00 [−0.20, +0.23] | −0.14 [−0.30, 0.00] | −0.17 [−0.35, −0.01] |
+| ΔMax drawdown (pp; + = smaller) | +6.47 [−7.38, +24.02] | +2.28 [−11.83, +19.90] | −3.52 [−12.73, 0.00] | −7.15 [−17.63, −1.40] |
+| Histories where Sharpe improves | 58% | 48% | 2% | 1% |
+
+![KPIs over 2,000 histories](outputs/figures/kpis_bootstrap.png)
+
+**Pension: replacement rate** (pension divided by the final salary, 29.8 UF). Since the model contributes every month, the level is a ceiling: with a contribution density *d*, the rate is *d* times the one reported. The percentage loss of the pension doesn't change with density if the gaps are spread evenly.
+
+| Crash | Age | Staying | Switching at the trough | Δ | Switching on crossing −15% | Δ |
+|---|---:|---:|---:|---:|---:|---:|
+| GFC 2008 | 30 | 60.4% | 57.3% | −3.1 pp | 66.6% | +6.2 pp |
+| GFC 2008 | 50 | 56.0% | 45.7% | **−10.3 pp** | 80.3% | +24.3 pp |
+| COVID 2020 | 30 | 66.1% | 63.1% | −3.0 pp | 63.1% | −3.0 pp |
+| COVID 2020 | 50 | 60.8% | 52.2% | **−8.6 pp** | 52.2% | −8.6 pp |
+| Inflation 2021–23 | 30 | 67.0% | 64.2% | −2.9 pp | 70.3% | +3.3 pp |
+| Inflation 2021–23 | 50 | 61.6% | 53.4% | **−8.2 pp** | 72.8% | +11.2 pp |
+
+**Reading:**
+
+1. **Switching late is the only decision the KPIs condemn unambiguously**: worse CAGR, worse Sharpe and no smaller drawdown, against staying and against an equivalent mix.
+2. **Switching early is risk reduction at zero expected cost**, but it adds nothing a static mix with the same exposure doesn't achieve. There is no timing; there is less equity.
+3. **The −15% rule's good 2006–2026 result is the 90th percentile** of what the bootstrap considers possible: a favourable history, not a property of the rule. The regime rule returns 0.56 pp/yr more than its 40/60 mix, but with 1.3 pp more volatility: the same Sharpe.
+4. **If the concern is the drawdown, the lever is the fund**: Fondo C has the best Sharpe of the five, and a static mix is chosen once and requires guessing nothing.
 
 ## The real data — and what "patrimonio-weighted" means
 
@@ -329,13 +391,15 @@ Switching to Fondo E isn't leaving risk behind. It's trading one risk for anothe
 
 **It can be claimed that:**
 
-- Switching to Fondo E at the bottom of a crash is expensive almost always (97% of synthetic histories), and takes between 13.1% and 18.5% of the pension of a 50- or 60-year-old saver, permanently.
+- Switching to Fondo E at the bottom of a crash destroys value on every indicator: −1.92 pp of real annual return (90% CI −3.99 to −0.18), a worse Sharpe ratio, and no smaller drawdown. For a 50-year-old saver it removes 8.2 to 10.3 points of replacement rate, permanently.
+- Switching early (on crossing −15%) has no expected cost and lowers risk, but no more than a static mix with the same exposure to Fondo E.
 - Fondo A's monthly returns are not predictable, and a strategy based on detecting turbulence has no edge once the information from the future is removed.
+- Fondo C has the best risk-adjusted return of the five for any real risk-free rate between 0% and 2%.
 - Measured in purchasing power, the system had a 26% fall in 2021–23 that the analysis in pesos doesn't register.
 
 **It cannot be claimed that:**
 
-- Switching early is a mistake. It's a coin flip with a slight tilt against it (it cost money in 59% of histories), and in real history it would have won two out of three times.
+- Switching early is a mistake, or a strategy: in real history it beat staying, but that result is the 90th percentile of what was possible, and on average it is equivalent to a static mix.
 - This describes what people actually did. Switching volume in 2020 didn't spike at the bottom (see below), so the "switch at the trough" scenario is a hypothesis about behaviour, not an observation.
 
 ## Calculate your own scenario
@@ -375,10 +439,11 @@ python analysis/timing_grid.py             # -> reports/timing_grid.csv
 python analysis/pension_loss.py            # -> reports/pension_loss.csv (loss in the pension, by age)
 python analysis/time_series.py             # -> reports/time_series_summary.json + ts_*.csv (~30 s)
 python analysis/bootstrap_cost.py          # -> reports/bootstrap_cost.json (2,000 histories x 3 blocks, ~15 s)
-python scripts/make_charts.py              # -> outputs/figures/*.png (11 figures)
+python analysis/kpis.py                    # -> reports/kpis.json + kpis_*.csv (funds, strategies, pension; ~25 s)
+python scripts/make_charts.py              # -> outputs/figures/*.png (13 figures)
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (not committed, see above)
 python scripts/calculator.py               # interactive: your own panic-switch scenario
-pytest tests/ -v                           # 56 tests, no network needed (synthetic fixtures)
+pytest tests/ -v                           # 65 tests, no network needed (synthetic fixtures)
 ```
 
 ## Next steps

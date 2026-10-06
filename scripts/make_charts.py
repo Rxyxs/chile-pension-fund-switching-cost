@@ -555,6 +555,108 @@ def fig_fondo_e_anual():
           "nominal en el E, sin ningún día extremo: es una caída gradual y sistémica, no un error del índice.")
 
 
+# ---------------------------------------------------------------------------
+# 12. KPIs: las estrategias en el plano retorno - caída máxima
+# ---------------------------------------------------------------------------
+def fig_kpis_estrategias():
+    print("12/13 kpis_estrategias ...")
+    import sys
+
+    import pandas as pd
+
+    sys.path.insert(0, str(ROOT))
+    from analysis.kpis import kpis_de_camino
+
+    k = json.loads((REPORTS / "kpis.json").read_text(encoding="utf-8"))
+    est = k["estrategias"]
+    ventana = est["_ventana"]
+
+    # La línea de todas las mezclas fijas A/E sobre la misma ventana: el lugar
+    # donde cae cualquier estrategia que solo cambia la exposición promedio.
+    con = _con()
+    semanal = {}
+    for f in ("A", "E"):
+        df = con.execute("SELECT fecha, index_value FROM fund_index_real WHERE fondo=? ORDER BY fecha",
+                         [f]).fetchdf()
+        semanal[f] = pd.Series(df.index_value.values, index=pd.to_datetime(df.fecha)).resample("W-FRI").last()
+    con.close()
+    v = pd.concat(semanal, axis=1).dropna()
+    v = v[(v.index >= ventana["desde"]) & (v.index <= ventana["hasta"])]
+    ra, re_ = v["A"].pct_change().fillna(0).values, v["E"].pct_change().fillna(0).values
+    linea = []
+    for w in np.linspace(0, 1, 21):
+        km = kpis_de_camino(pd.Series(np.cumprod(1 + (1 - w) * ra + w * re_), index=v.index))
+        linea.append((-km["drawdown_max_pct"], km["cagr_pct"]))
+    linea = np.array(linea)
+
+    fig, ax = plt.subplots(figsize=(10.5, 6))
+    ax.plot(linea[:, 0], linea[:, 1], color=MUTED, linewidth=1.6, zorder=1)
+    ax.text(linea[6, 0], linea[6, 1] - 0.22, "mezclas fijas de A y E", color=MUTED,
+            fontsize=9, ha="center", va="top")
+    puntos = [("Quedarse en A", "Quedarse en A", INK, "o"),
+              ("Siempre en E", "Siempre en E", FONDO_E, "o"),
+              ("Regla −15% (observable)", "Regla −15%", STAY, "D"),
+              ("Régimen fuera de muestra", "Régimen fuera de muestra", HILITE, "D"),
+              ("Piso (retrospectiva, no ejecutable)", "Cambiarse en el piso (retrospectiva)", COST, "X")]
+    # El eje X está invertido (más caída a la izquierda), así que un
+    # desplazamiento negativo en datos mueve la etiqueta hacia la DERECHA.
+    desplaz = {"Quedarse en A": (0.0, 0.28, "center"), "Siempre en E": (0.0, -0.32, "center"),
+               "Regla −15%": (-0.9, 0.0, "left"), "Régimen fuera de muestra": (0.0, 0.32, "center"),
+               "Cambiarse en el piso (retrospectiva)": (-0.9, 0.0, "left")}
+    for clave, rotulo, color, marca in puntos:
+        x, y = -est[clave]["drawdown_max_pct"], est[clave]["cagr_pct"]
+        ax.scatter([x], [y], s=110, color=color, marker=marca, zorder=3, edgecolor="white", linewidth=1.2)
+        dx, dy, ha = desplaz[rotulo]
+        ax.text(x + dx, y + dy, rotulo, fontsize=9.5, color=color, ha=ha, va="center", fontweight="600")
+    ax.set_ylim(-0.5, 6.6)
+    ax.invert_xaxis()
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"−{x:.0f}%"))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.0f}%".replace(".", ",")))
+    _style(ax, title="Estrategias en el plano retorno–riesgo, historia real 2006–2026",
+           xlabel="Caída máxima (hacia la derecha, menos riesgo)", ylabel="Retorno real anual (CAGR)",
+           grid_axis="both")
+    _save(fig, "kpis_estrategias.png",
+          "Retornos semanales reales (UF). La línea gris es cada mezcla fija posible entre A y E, rebalanceada "
+          "cada semana: una regla que solo baja la exposición cae sobre ella.\nLa regla −15% queda muy por "
+          "encima en esta historia (3 decisiones, 2 aciertos), pero ese resultado es el percentil 90 de 2.000 "
+          "historias sintéticas,\ndonde su ventaja media sobre la mezcla equivalente es nula. La de régimen "
+          "empata en Sharpe con la mezcla 40/60: rinde más, con más volatilidad.")
+
+
+# ---------------------------------------------------------------------------
+# 13. KPIs en 2.000 historias: forest plot
+# ---------------------------------------------------------------------------
+def fig_kpis_bootstrap():
+    print("13/13 kpis_bootstrap ...")
+    k = json.loads((REPORTS / "kpis.json").read_text(encoding="utf-8"))["bootstrap"]
+    paneles = [("dcagr", "timing_dcagr", "ΔCAGR (pp por año)"),
+               ("dsharpe", "timing_dsharpe", "ΔSharpe"),
+               ("ddd", "timing_ddd", "ΔCaída máxima (pp; + = menor caída)")]
+    filas = [("observable", "vs A", "Regla −15%  vs. quedarse", STAY),
+             ("observable", "vs mezcla", "Regla −15%  vs. mezcla equivalente", STAY),
+             ("piso", "vs A", "En el piso  vs. quedarse", COST),
+             ("piso", "vs mezcla", "En el piso  vs. mezcla equivalente", COST)]
+    fig, axes = plt.subplots(1, 3, figsize=(12.5, 4.4), sharey=True)
+    for ax, (m_a, m_mix, titulo) in zip(axes, paneles):
+        for i, (regla, contra, rotulo, color) in enumerate(filas):
+            x = k[regla][m_a if contra == "vs A" else m_mix]
+            y = len(filas) - 1 - i
+            ax.plot([x["p05"], x["p95"]], [y, y], color=color, linewidth=2.2, alpha=0.6)
+            ax.scatter([x["media"]], [y], color=color, s=60, zorder=3,
+                       marker="o" if contra == "vs A" else "s")
+        ax.axvline(0, color=INK, linewidth=0.9)
+        _style(ax, title=titulo, grid_axis="x")
+        ax.title.set_fontsize(11)
+    axes[0].set_yticks(range(len(filas)), [f[2] for f in filas][::-1], fontsize=9.5)
+    fig.suptitle("En 2.000 historias: tarde destruye valor en todo; temprano no agrega nada sobre una "
+                 "mezcla fija", fontsize=12.5, color=INK, x=0.01, ha="left", fontweight="600", y=1.03)
+    _save(fig, "kpis_bootstrap.png",
+          "Punto = media; barra = intervalo central del 90% entre las 2.000 historias del bootstrap estacionario "
+          "(bloques de 26 semanas). 'Mezcla equivalente' = mezcla fija A/E con la misma\nexposición promedio al E "
+          "que tuvo la regla en esa historia. Si el intervalo cruza el cero, la diferencia no es distinguible "
+          "de nada.")
+
+
 if __name__ == "__main__":
     print(f"Escribiendo figuras en {FIG_DIR}\n")
     fig_mechanism()
@@ -568,4 +670,6 @@ if __name__ == "__main__":
     fig_volatilidad_regimen()
     fig_senal_sesgo()
     fig_fondo_e_anual()
+    fig_kpis_estrategias()
+    fig_kpis_bootstrap()
     print("\nListo.")
