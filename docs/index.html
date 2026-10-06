@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cambiarse de fondo en pánico</title>
-<meta name="description" content="Cuánto cuesta cambiarse de fondo de pensiones durante una caída, con datos diarios reales de la Superintendencia de Pensiones, 2002-2026.">
+<meta name="description" content="Cuánto le cuesta a la pensión cambiarse de fondo durante una caída, con datos diarios reales de la Superintendencia de Pensiones 2002-2026, en UF: bootstrap, GARCH y régimen.">
 <style>
   :root {
     --bg: #FBFAF8; --surface: #FFFFFF; --ink: #23201D; --muted: #6B645D;
@@ -77,9 +77,10 @@
 <header>
   <h1>¿Cuánto cuesta cambiarse de fondo<br>cuando se cae la bolsa?</h1>
   <p class="lede">
-    Tengo mis ahorros previsionales en un fondo que no elegí mirando datos, como casi todos.
-    Así que me senté a responder esa pregunta con los <strong>datos diarios reales de la
-    Superintendencia de Pensiones</strong> — 278.000 filas, 2002 a 2026 — y no con un mercado simulado.
+    Lo respondí con los <strong>datos diarios reales de la Superintendencia de Pensiones</strong>
+    —278.000 filas, de 2002 a 2026, deflactadas por la UF— y no con un mercado simulado. La
+    respuesta corta: depende de <em>cuándo</em> te cambias, y no existe una regla que gane de forma
+    confiable.
   </p>
   <div class="links">
     <a href="https://github.com/Rxyxs/chile-pension-fund-switching-cost">Código y metodología</a>
@@ -88,16 +89,16 @@
 </header>
 
 <div class="kpis">
-  <div class="kpi cost"><div class="n">+17,2 pp</div><div class="l">costo medio de cambiarse en el piso</div></div>
-  <div class="kpi cost"><div class="n">100%</div><div class="l">de los 15 escenarios favorecieron quedarse</div></div>
-  <div class="kpi stay"><div class="n">−25%</div><div class="l">pérdida a partir de la cual moverse deja de ayudar</div></div>
-  <div class="kpi"><div class="n">3</div><div class="l">caídas reales ≥15% desde 2002</div></div>
+  <div class="kpi cost"><div class="n">97%</div><div class="l">de las veces costó cambiarse en el piso, en 2.000 historias sintéticas</div></div>
+  <div class="kpi"><div class="n">59%</div><div class="l">si en cambio te cambias al cruzar −15%: casi una moneda al aire</div></div>
+  <div class="kpi cost"><div class="n">−18,5%</div><div class="l">de la pensión pierde alguien de 50 años que se cambió en el piso de 2008</div></div>
+  <div class="kpi"><div class="n">−26%</div><div class="l">cayó el poder adquisitivo del Fondo A en 2021–23; en pesos no se nota</div></div>
 </div>
 
 <p>
   Un apunte para quien no conoce el sistema: los ahorros obligatorios de cada trabajador están
   en uno de cinco <em>multifondos</em> (A a E) administrados por una AFP. El <strong>Fondo A</strong>
-  invierte hasta 80% en acciones — más retorno esperado, más vaivén. El <strong>Fondo E</strong> es
+  invierte hasta 80% en acciones —más retorno esperado, más vaivén—. El <strong>Fondo E</strong> es
   casi todo renta fija. Uno puede cambiarse cuando quiera, y la jugada popular en una caída es
   huir de A hacia el "seguro" E.
 </p>
@@ -106,7 +107,7 @@
 <figure>
   <img src="figures/mecanismo_covid.png" alt="Fondo A y Fondo E durante la caída de 2020 y su recuperación">
   <figcaption>
-    El Fondo A cae 23% y el E casi no se mueve — que es exactamente por qué huir se siente
+    El Fondo A cae 23% y el E casi no se mueve, que es exactamente por qué huir se siente
     correcto en ese momento. El costo no se paga el día del cambio: se paga en el año siguiente,
     cuando A vuelve a +15% y E termina donde empezó.
   </figcaption>
@@ -120,34 +121,67 @@
   </p>
 </div>
 
-<h2><span class="num">2.</span>En los 15 escenarios, quedarse ganó siempre</h2>
+<h2><span class="num">2.</span>Lo que eso le hace a la pensión</h2>
 <p>
-  Las caídas no las elegí a mano: un detector las encuentra barriendo el índice y marcando cada
-  período bajo el agua de 15% o más. Salen tres — 2008, 2011 y 2020 — y cada una se prueba contra
-  cinco plazos de retorno distintos.
+  Medir el costo en puntos de rentabilidad sobre un monto único es la pregunta de un
+  inversionista. Un afiliado cotiza todos los meses, tiene una edad, y la ley le impide estar en el
+  Fondo A desde los 56. Así que simulé carreras previsionales completas en UF —cotizando 10% desde
+  los 25— para la misma persona tomando dos decisiones distintas.
 </p>
 <figure>
-  <img src="figures/distribucion_escenarios.png" alt="Distribución del costo del pánico en los 15 escenarios">
-  <figcaption>Toda la masa está a la derecha del cero. Media +17,2 puntos, rango +1,5 a +36,5.</figcaption>
+  <img src="figures/pension_por_edad.png" alt="Cambio en la pensión por edad, según se cambie en el piso o al cruzar -15%">
+  <figcaption>
+    Hombre que cotiza 10% de 20 UF; Fondo A hasta los 55 y B después (Ley 19.795). Vuelve a su
+    fondo 12 meses después del cambio.
+  </figcaption>
 </figure>
+<div class="callout">
+  <p>
+    La pérdida de cambiarse en el piso <strong>crece con la edad y es permanente</strong>: cuando
+    las dos trayectorias vuelven al mismo fondo crecen igual, así que la recuperación perdida no
+    vuelve nunca. A los 30 años son entre 4 y 5 puntos de pensión; a los 50, entre 13 y 18.
+  </p>
+</div>
 
-<h2><span class="num">3.</span>¿Y si me hubiera movido antes?</h2>
+<h2><span class="num">3.</span>Pero el piso solo se conoce después</h2>
 <p>
-  Es la pregunta que sigue, y tiene una trampa. Barrer por "días antes del piso" da una respuesta
-  tan cierta como inútil: cambiarse una semana después del techo de 2007 gana 90 puntos porque
-  esquiva el crash entero. Pero <strong>nadie sabe que está parado en el techo</strong> — eso mide
-  presciencia, no pánico.
+  La primera versión de este análisis concluía que "en los 15 escenarios, quedarse ganó siempre".
+  Tenía un problema serio: se cambiaba en el mínimo <em>realizado</em> de cada caída, y elegir el
+  mínimo con retrospectiva garantiza que lo que viene después es una subida. Nadie sabe que está
+  en el piso.
 </p>
 <p>
-  Lo que una persona sí observa el día que decide es cuánto perdió hasta ahí. Indexando por eso,
-  la respuesta se vuelve accionable:
+  Así que generé 2.000 historias sintéticas de 24 años con un bootstrap por bloques sobre los
+  retornos reales, y comparé esa regla con una que alguien sí puede seguir: cambiarse al cruzar
+  −15% de pérdida.
 </p>
+<figure>
+  <img src="figures/bootstrap_reglas.png" alt="Distribución del costo de cambiarse según la regla, en 2.000 historias sintéticas">
+  <figcaption>
+    Mismo resultado con bloques de 13, 26 y 52 semanas. La regla observable incluye caídas que
+    nunca se recuperan, que el análisis original dejaba fuera.
+  </figcaption>
+</figure>
+<div class="callout warn">
+  <p>
+    La lectura honesta es una <strong>asimetría</strong>: cambiarse tarde cuesta casi siempre;
+    cambiarse temprano es una apuesta con resultados muy dispersos en las dos direcciones. En la
+    historia real la regla temprana habría ganado dos de tres veces, y eso tampoco la vuelve una
+    estrategia.
+  </p>
+</div>
 
+<h2><span class="num">4.</span>¿Y si me hubiera movido antes?</h2>
+<p>
+  Barrer por "días antes del piso" da una respuesta tan cierta como inútil: cambiarse una semana
+  después del techo de 2007 gana 90 puntos porque esquiva el crash entero. Pero <strong>nadie
+  sabe que está parado en el techo</strong>. Lo que una persona sí observa el día que decide es
+  cuánto perdió hasta ahí:
+</p>
 <figure>
   <img src="figures/punto_de_quiebre.png" alt="Costo de cambiarse según la pérdida ya sufrida">
-  <figcaption>481 combinaciones de día del cambio × plazo de retorno, sobre las 3 caídas reales.</figcaption>
+  <figcaption>481 combinaciones de día del cambio × plazo de retorno, sobre las caídas reales.</figcaption>
 </figure>
-
 <div class="tablewrap">
 <table>
   <thead><tr><th>Pérdida ya sufrida al cambiarse</th><th>n</th><th>Costo mediano</th><th>Gana cambiarse</th></tr></thead>
@@ -160,24 +194,63 @@
   </tbody>
 </table>
 </div>
+<p>
+  Son <strong>3 episodios, no 3.000</strong>: el balde de −20% a −30% se apoya en 19 combinaciones
+  de las mismas crisis, así que ese 42% pesa mucho menos que el 100% de la primera fila.
+</p>
 
-<div class="callout warn">
+<h2><span class="num">5.</span>¿Se puede anticipar una caída?</h2>
+<p>
+  Todo el argumento descansa en que nadie sabe si la caída va a seguir, así que lo puse a prueba.
+  Los retornos mensuales del Fondo A no tienen autocorrelación (AR(1) +0,07, p = 0,53). La
+  volatilidad, en cambio, sí es predecible —un shock se disipa a la mitad en unas seis
+  semanas—, pero eso dice que hay tormenta, no hacia dónde va.
+</p>
+<figure>
+  <img src="figures/volatilidad_regimen.png" alt="Volatilidad condicional GJR-GARCH del Fondo A y régimen turbulento">
+</figure>
+<p>
+  Un modelo de cambio de régimen detecta esas tormentas. Salir cuando las detecta parecía ganarle
+  a quedarse… hasta quitarle la información del futuro.
+</p>
+<figure>
+  <img src="figures/senal_sesgo_anticipacion.png" alt="Retorno de la regla de salir en turbulencia, con y sin información del futuro">
+</figure>
+<div class="callout">
   <p>
-    <strong>Esto no es una estrategia.</strong> Que exista una zona donde cambiarse gana no la
-    vuelve ocupable: ganar ahí exige saber que la caída va a continuar, que es justo lo que no se
-    sabe en el momento. El umbral sirve en la dirección contraria — decirle a alguien que ya
-    perdió mucho que moverse ahora no lo salva.
-  </p>
-  <p>
-    Y son <strong>3 episodios, no 3.000</strong>. El balde de −20% a −30% se apoya en 19
-    combinaciones de las mismas crisis, así que ese 42% pesa mucho menos que el 100% de la
-    primera fila.
+    Con parámetros que conocen el futuro, la regla rendía entre 1,4 y 2,3 puntos más por año.
+    Estimada fuera de muestra y con el rezago real de un traspaso, rinde <strong>0,2 puntos
+    menos</strong> que quedarse. La ventaja era sesgo de anticipación.
   </p>
 </div>
 
-<h2><span class="num">4.</span>La sorpresa: la gente no se cambia en el piso</h2>
+<h2><span class="num">6.</span>En poder adquisitivo, la historia es otra</h2>
 <p>
-  Todo lo anterior responde <em>cuánto costaría</em> si alguien se cambiara — es un contrafactual
+  El valor cuota está en pesos, y cada retorno lleva unos 3,8 puntos de inflación anual adentro.
+  Deflactado por la UF:
+</p>
+<figure>
+  <img src="figures/real_vs_nominal.png" alt="Fondo A en pesos y en UF, y su caída desde el máximo">
+</figure>
+<p>
+  La crisis de 2008 dejó al Fondo A bajo el agua hasta 2014, no hasta 2010. Y 2021–23, que en
+  pesos fue una caída de 14,6%, fue en UF una pérdida de 26%: la segunda peor de los 24 años, con
+  la inflación de 2022 encima de la caída del mercado.
+</p>
+
+<h2><span class="num">7.</span>El refugio también cae</h2>
+<figure>
+  <img src="figures/fondo_e_anual.png" alt="Retorno real anual del Fondo E">
+</figure>
+<p>
+  Contra las caídas de la bolsa, el E protege: lo hizo en 10 de las 12 tormentas en que cayó el A.
+  Pero tiene su propio riesgo, el de tasas e inflación: perdió 13,1% real en 2021 y lleva −10,5%
+  real en 2026. Cambiarse al E no es salir del riesgo; es cambiar un riesgo por otro.
+</p>
+
+<h2><span class="num">8.</span>La sorpresa: la gente no se cambia en el piso</h2>
+<p>
+  Todo lo anterior responde <em>cuánto costaría</em> si alguien se cambiara: es un contrafactual
   de precios, no evidencia de que la gente lo haga. Así que fui a buscar el comportamiento real en
   los boletines mensuales de la Superintendencia.
 </p>
@@ -196,38 +269,50 @@
   </p>
 </div>
 
-<h2><span class="num">5.</span>Dos trampas reales en los datos</h2>
+<h2><span class="num">9.</span>Cuatro trampas reales en los datos</h2>
 <ul>
   <li>
     <strong>El encabezado del archivo cambia 31 veces.</strong> Qué AFP ocupa qué columna se mueve
-    cada vez que una entra, sale o se fusiona. Leer el archivo con un encabezado fijo — el primer
-    enfoque obvio — atribuye los números de una AFP a otra desde la primera fusión en adelante,
-    en silencio.
+    cada vez que una entra, sale o se fusiona. Leerlo con un encabezado fijo atribuye en silencio
+    los números de una AFP a otra desde la primera fusión en adelante.
   </li>
   <li>
     <strong>Dos boletines nombran el mes equivocado.</strong> La nota al pie que reporta los
-    traspasos está escrita en prosa, y en al menos dos de los 22 boletines esa prosa contradice
-    los encabezados de su propia tabla. El parser deriva el mes de la tabla, no de la prosa.
+    traspasos está escrita en prosa, y en dos de los 22 boletines contradice los encabezados de su
+    propia tabla. El parser deriva el mes de la tabla, no de la prosa.
+  </li>
+  <li>
+    <strong>El dólar se coló en la serie de la UF.</strong> El 29 y el 30 de diciembre de 2014 la
+    "UF" vale 608,15 y 607,38 —el dólar observado de esos días— en vez de 24.627,10. Lo encontré
+    porque el índice real saltaba ×40 en un día y volvía.
+  </li>
+  <li>
+    <strong>Los fines de semana rompían el modelo de volatilidad.</strong> El valor cuota se
+    publica todos los días, y el sábado y el domingo casi no se mueve. Mezclado con los días
+    hábiles, el GARCH daba parámetros clavados en las cotas del optimizador.
   </li>
 </ul>
 
-<h2><span class="num">6.</span>Correlo vos</h2>
+<h2><span class="num">10.</span>Córrelo tú</h2>
 <pre><code>pip install -r requirements.txt
 python etl/fetch_valor_cuota.py      # descarga los 5 archivos reales
+python etl/fetch_uf.py && python etl/parse_uf.py
 python etl/build_duckdb.py
-python analysis/timing_grid.py       # la grilla de timing
+python analysis/pension_loss.py      # la pérdida en la pensión, por edad
+python analysis/bootstrap_cost.py    # 2.000 historias sintéticas
+python analysis/time_series.py       # GARCH, régimen y la señal fuera de muestra
 python scripts/calculator.py         # calculadora interactiva</code></pre>
 <p>
   <code>scripts/calculator.py</code> deja elegir una caída real (o fechas propias), a qué fondo te
   habrías cambiado y cuántos meses después habrías vuelto, y calcula el costo histórico real contra
-  los mismos datos de esta página.
+  los mismos datos de esta página. Son 56 tests, sin necesidad de red.
 </p>
 
 <footer>
   Pablo Reyes ·
   <a href="https://github.com/Rxyxs/chile-pension-fund-switching-cost">github.com/Rxyxs/chile-pension-fund-switching-cost</a>
-  · MIT. Datos públicos de la Superintendencia de Pensiones. Cada cifra y cada gráfico de esta
-  página los produce el pipeline del repositorio; ninguno está escrito a mano.
+  · MIT. Datos públicos de la Superintendencia de Pensiones y UF del Banco Central. Cada cifra y
+  cada gráfico de esta página los produce el pipeline del repositorio; ninguno está escrito a mano.
   <br><br>
   Esto es un ejercicio de análisis de datos, no asesoría financiera.
 </footer>

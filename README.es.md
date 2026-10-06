@@ -8,6 +8,18 @@
 
 **Si no conoces bien el sistema de multifondos**: el ahorro previsional obligatorio de cada trabajador está en uno de 5 "multifondos" (A a E) administrados por una AFP. El Fondo A invierte hasta 80% en acciones — mayor retorno esperado, más vaivenes. El Fondo E invierte casi todo en renta fija — menor retorno esperado, vaivenes mucho más chicos. Los afiliados pueden cambiarse de fondo cuando quieran, y el movimiento típico en una caída es huir de A (o B/C) hacia el "más seguro" E — este proyecto mide si ese instinto realmente compensa.
 
+## Lo que encontré
+
+| | |
+|---|---|
+| **Cambiarse en el piso cuesta caro, casi siempre** | En 2.000 historias sintéticas de 24 años, cambiarse al E en el mínimo de la caída costó en el 97% de los casos (mediana +17,8 puntos en el año siguiente). Para un afiliado de 50 años, eso es entre 13,3% y 18,5% de la pensión, y es permanente. |
+| **Pero el piso solo se conoce después** | Nadie sabe que está en el piso. Con una regla que alguien sí podría seguir —cambiarse al cruzar −15% de pérdida— el costo baja a una mediana de +3,4 puntos y ocurre en el 59% de los casos: una moneda al aire con un leve sesgo en contra. El "15 de 15 favorecen quedarse" de la primera versión de este análisis era, en buena parte, ese sesgo de retrospectiva. |
+| **No hay una regla que gane de forma confiable** | Los retornos mensuales no son predecibles (AR(1), p = 0,53). La volatilidad sí lo es, pero detecta tormentas, no su dirección. Salir cuando un modelo de régimen detecta turbulencia "ganaba" entre 1,4% y 2,3% al año… hasta quitarle la información del futuro: fuera de muestra y con el rezago real de un traspaso, rinde 0,2% al año menos que quedarse. |
+| **En poder adquisitivo, la historia es otra** | Deflactado por la UF, la crisis de 2008 dejó al Fondo A bajo el agua hasta 2014, no hasta 2010. Y 2021–23, que en pesos fue una caída de 14,6% que "no califica", fue en UF una pérdida de 26%: la segunda peor de los 24 años. |
+| **El refugio también cae** | El Fondo E protegió en 10 de las 12 tormentas en que cayó el A. Pero tiene su propio riesgo, el de tasas e inflación: perdió 13,1% real en 2021 y lleva −10,5% real en 2026. |
+
+El resto del documento muestra cómo se llegó a cada fila, incluidos los errores que cometí en el camino y cómo quedaron fijados con tests.
+
 ## Los datos reales — y qué significa "ponderado por patrimonio"
 
 La Superintendencia de Pensiones publica dos números cada día hábil, para cada AFP, para cada uno de los 5 tipos de fondo:
@@ -64,7 +76,9 @@ recuperación.
 
 ![Distribución de los 15 escenarios sistemáticos](outputs/figures/distribucion_escenarios.png)
 
-**Hallazgo honesto, no elegido a dedo**: el escenario 2022 muestra un costo casi nulo, y quiero ser directo en que esto no se filtró para que la historia se viera más limpia — es la misma metodología aplicada a un cuarto período real, y resulta que contradice a los otros tres. La razón, en simple: la crisis de 2022 fue un reajuste lento y sostenido impulsado por el alza de tasas y la inflación, no una caída-y-rebote brusca. Los bonos (lo que el Fondo E tiene mayoritariamente) *también* se vendieron ese año porque el alza de tasas también les pega a los bonos — así que huir a E no esquivó mucho dolor, y como el Fondo A nunca protagonizó una recuperación brusca en V después, tampoco hubo un rebote perdido que pagar. La conclusión no es "cambiarse en pánico siempre cuesta ~25 puntos" — es que el costo es específico a cierta *forma* de crisis (una caída brusca seguida de una recuperación brusca), que es exactamente lo que fueron 2008 y COVID, y lo que 2022 no fue.
+**Hallazgo honesto, no elegido a dedo**: el escenario 2022 muestra un costo casi nulo, y quiero ser directo en que esto no se filtró para que la historia se viera más limpia — es la misma metodología aplicada a un cuarto período real, y resulta que contradice a los otros tres. La razón: después del piso de octubre de 2022, el Fondo A no protagonizó una recuperación en V. En los 12 meses siguientes, A y E rindieron exactamente lo mismo (+3,0% nominal cada uno), así que no hubo rebote que perderse.
+
+**Corrección a la primera versión de este README**, que atribuía el resultado a que "los bonos también se vendieron ese año por el alza de tasas". En Chile eso pasó en *2021*, no en 2022: el Fondo E cayó 7,3% nominal en 2021, y entre fines de 2021 y el piso de 2022 *subió* 10,2%, en buena parte por la indexación a la UF de sus bonos durante la inflación de ese año. La conclusión no es "cambiarse en pánico siempre cuesta ~25 puntos" — es que el costo es específico a cierta *forma* de crisis (una caída brusca seguida de una recuperación brusca), que es exactamente lo que fueron 2008 y COVID, y lo que 2022 no fue.
 
 ## Más allá de 4 ejemplos: todas las caídas reales que hay en los datos
 
@@ -79,6 +93,8 @@ Encontró exactamente 3:
 | 2020-02-24 | 2020-03-24 | -26,5% | 2020-11-25 |
 
 Ojo que el período del alza de tasas 2022 de la tabla de arriba **no** está en esta lista — nunca cruzó una caída del 15% con esta medida, lo cual es consistente (no contradice) con el costo de pánico casi nulo ya encontrado para ese escenario más arriba: una crisis que nunca fue una caída brusca no genera mucho "valle" al cual venderse en pánico.
+
+**En términos reales, sí está.** Deflactado por la UF, 2021–23 es una caída de 26% del poder adquisitivo. Ver [En poder adquisitivo, no en pesos](#en-poder-adquisitivo-no-en-pesos).
 
 `analysis/systematic_panic_switch_cost.py` prueba cada una de estas 3 caídas reales contra una grilla de 5 rezagos de retorno realistas (3/6/12/18/24 meses) — 15 escenarios en total, no 4 — y reporta la distribución completa en vez de anécdotas individuales:
 
@@ -97,6 +113,8 @@ python analysis/systematic_panic_switch_cost.py     # -> reports/systematic_pani
 | Pánico mejor que quedarse | 0% de los escenarios |
 
 Los 15 escenarios sistemáticos favorecieron quedarse — no solo las 3 crisis más conocidas, en todos los rezagos probados. Es una versión más robusta y mecánicamente derivada de la misma conclusión que apuntaban los 4 escenarios elegidos a mano, no una distinta — pero ahora respaldada por cada crisis real que califica en el dataset, no por cuatro elegidas a dedo. Números completos por escenario en `reports/systematic_panic_switch_results.csv`; números agregados en `reports/systematic_panic_switch_summary.json`.
+
+**Una advertencia que este resultado necesita, y que la primera versión de este README no tenía.** Los 15 escenarios se cambian *en el piso*, y el piso solo se conoce después. Elegir el mínimo realizado garantiza por construcción que lo que viene es una subida. Además, solo entran las caídas que se recuperaron: las que nunca vuelven, que son justo las que harían ganar al que se cambió, quedan afuera. Así que este 100% es el peor caso con retrospectiva, no el costo típico del pánico. [El bootstrap de más abajo](#el-piso-es-retrospectivo-cuánto-del-resultado-era-retrospectiva) mide cuánto del resultado era eso.
 
 ## "¿Y si me hubiera cambiado *antes*?" — dónde se da vuelta el consejo
 
@@ -144,6 +162,184 @@ Tres advertencias, porque este resultado es fácil de leer mal:
   episodio comparten la misma trayectoria de mercado, así que la muestra efectiva se parece
   más a 3 que a 481.
 
+## En poder adquisitivo, no en pesos
+
+Todo lo anterior usa el valor cuota en pesos corrientes, y eso tiene una consecuencia que la primera versión del proyecto no vio: cada retorno lleva la inflación chilena adentro, alrededor de 3,8% al año en la muestra. Para comparar dos fondos en los mismos días eso no importa, porque la inflación se cancela en la razón. Pero una pensión se paga en poder adquisitivo, y apenas el análisis mezcla retornos con sueldos o pensiones, hay que deflactar.
+
+`etl/fetch_uf.py` descarga la UF diaria 2002–2026 (serie del Banco Central, vía el espejo público mindicador.cl) y `etl/build_duckdb.py` construye `fund_index_real`, el mismo índice dividido por la UF.
+
+**Una tercera trampa de datos, peor que las dos anteriores.** La serie de la UF descargada trae tres defectos, y uno solo de ellos lo habría detectado un control puntual:
+
+- **2015-07-11 aparece cinco veces.** Copias idénticas que encajan con sus vecinos: se colapsan. Si dos copias de un día no coincidieran, `etl/parse_uf.py` lo trata como conflicto y falla.
+- **Faltan 2015-12-12 y 2015-12-31.** La UF crece a tasa diaria geométrica constante entre el 10 de un mes y el 9 del siguiente, así que la interpolación geométrica reproduce el valor exacto que habría publicado la fórmula.
+- **El dólar se coló en la serie.** El 2014-12-29 y el 12-30, la "UF" vale 608,15 y 607,38, que es el *dólar observado* de esos días, en vez de 24.627,10. Deflactar por ese valor hacía saltar el índice real ×40 y volver. Lo encontré perfilando los retornos diarios antes de modelarlos: un día de +370% logarítmico y una curtosis de 4.300. La protección es estructural, no una fecha escrita a mano: la UF no puede moverse 1% en un día (eso sería ~35% de inflación mensual; el mayor movimiento legítimo de la muestra es 0,063% diario, por el IPC de 1,9% de marzo de 2022).
+
+Las tres están fijadas en `tests/test_uf.py`.
+
+**Retorno real anual, sep-2002 a oct-2026:**
+
+| Fondo | Nominal | Real (UF) |
+|---|---:|---:|
+| A | 9,99% | **5,88%** |
+| B | 9,10% | 5,02% |
+| C | 8,22% | 4,24% |
+| D | 7,27% | 3,26% |
+| E | 6,85% | **2,92%** |
+
+El orden A > B > C > D > E es monótono, que es lo que exige el diseño de riesgo del sistema. Es una buena señal de que el deflactado está bien hecho.
+
+**Y en términos reales, las caídas son otras.** El mismo umbral de 15%, aplicado al índice real:
+
+| Máximo | Piso | Caída real | Recuperado en UF |
+|---|---|---:|---|
+| 2007-11-02 | 2008-11-21 | −48,3% | **2014-08-22** |
+| 2020-02-14 | 2020-03-20 | −25,1% | 2021-01-15 |
+| 2021-11-19 | 2023-05-05 | **−25,8%** | 2025-08-08 |
+
+![Fondo A en pesos y en UF](outputs/figures/real_vs_nominal.png)
+
+La crisis de 2008 dejó al Fondo A bajo el agua en poder adquisitivo durante casi siete años, no tres. La caída de 2011 desaparece como episodio propio: en UF ocurrió *dentro* del hoyo de la GFC, que todavía no se recuperaba. Y aparece 2021–23, que en pesos llegó a −14,6% y no calificaba: en poder adquisitivo, con la inflación de 12,8% de 2022 encima de la caída del mercado, fue la segunda peor pérdida de los 24 años. Esa es la pérdida de pensiones que la gente efectivamente sintió.
+
+## La pérdida en la pensión, no en puntos
+
+Todo el análisis anterior mide el costo sobre un monto único: cuánto habría crecido un peso que ya estaba adentro. Esa es la pregunta de un inversionista, no la de un afiliado. `analysis/pension_loss.py` simula carreras previsionales completas y mide la pérdida donde importa.
+
+**Supuestos, declarados de frente:**
+
+- Hombre que cotiza 10% de un sueldo de 20 UF (unos $820.000) desde los 25 hasta los 65, con 1% de crecimiento real anual del sueldo.
+- **Fondo A hasta los 55 y B desde los 56.** La Ley 19.795 prohíbe el Fondo A para el saldo obligatorio de hombres desde los 56 años y de mujeres desde los 51. Una simulación que deja a alguien de 60 años en el A describe a un afiliado que no puede existir, y la primera versión de este módulo lo hacía.
+- Todo en UF. El índice real se usa donde hay datos (2002–2026). Fuera de esa ventana, el retorno real medio de cada fondo. El resultado casi no depende de ese tramo, porque las dos decisiones lo comparten: escalar el retorno extrapolado entre ×0,5 y ×1,5 mueve la pérdida de un afiliado de 40 años solo entre 9,4% y 10,6%.
+- El saldo se convierte en pensión con una anualidad cierta de 20 años al 2% real. **No** es una renta vitalicia: no usa tablas de mortalidad ni considera beneficiarios. Sirve para expresar la pérdida en pensión, no para estimar la pensión de nadie. Por la misma razón, el resultado es el **porcentaje**, que no depende del sueldo ni de las lagunas de cotización. Los pesos son ilustrativos.
+
+**Cambio en la pensión, para la misma persona, según cuándo se cambia** (vuelve a su fondo 12 meses después):
+
+| Caída real | 30 años, en el piso | 50 años, en el piso | 50 años, al cruzar −15% |
+|---|---:|---:|---:|
+| GFC 2008 | −5,1% | −18,5% | **+43,4%** |
+| COVID 2020 | −4,5% | −14,2% | −14,2% |
+| Inflación 2021–23 | −4,3% | −13,3% | **+18,2%** |
+
+![Cambio en la pensión por edad y por regla](outputs/figures/pension_por_edad.png)
+
+Tres cosas salen de acá:
+
+1. **La pérdida crece con la edad, y es permanente.** Una vez que las dos trayectorias vuelven al mismo fondo crecen igual, así que la recuperación que no se vivió no se recupera nunca. Un afiliado joven la diluye en décadas de cotizaciones posteriores; alguien cerca de jubilar no tiene con qué diluirla.
+2. **Mi hipótesis sobre las cotizaciones resultó débil.** Esperaba que dejar de "comprar barato" durante la caída —las cotizaciones que van al E mientras el A está en el piso— fuera una parte grande del costo. El módulo lo separa del efecto sobre el saldo ya acumulado, y explica entre 0% y 14% de la pérdida: doce meses de cotizaciones pesan poco frente a un saldo de décadas.
+3. **Cambiarse temprano habría sumado en dos de las tres caídas.** En la GFC, quien salió al cruzar −15% en enero de 2008 esquivó el colapso y volvió cerca del fondo. En COVID las dos reglas coinciden: la caída fue tan rápida que el −15% y el piso cayeron en la misma semana. Pero tres episodios no hacen una estrategia, y la sección siguiente muestra por qué.
+
+**Tres errores que cometí construyendo este módulo, y cómo quedaron fijados.** La primera versión mezclaba un índice nominal con un sueldo real y daba pérdidas de $494.000 mensuales para un sueldo de $800.000. Indexaba cada fondo por su posición desde su propio primer mes, y como el Fondo A empieza en septiembre de 2002 y el E en enero, el precio del E quedaba desfasado ocho meses. Y dejaba a afiliados de 60 años en el Fondo A. Los tres tienen test en `tests/test_pension_loss.py`, y el del desfase lo verifiqué reintroduciendo el error a propósito: dos tests fallan.
+
+## El piso es retrospectivo: cuánto del resultado era retrospectiva
+
+El resultado central de la primera versión del proyecto —"en los 15 escenarios, quedarse ganó"— tiene dos problemas que van más allá de que sean solo 3 caídas:
+
+- **Retrospectiva.** "Cambiarse en el piso" usa el mínimo *realizado* de la caída. Nadie sabe que está en el piso: eso se sabe después. Y elegir el mínimo garantiza por construcción que lo que sigue es una subida.
+- **Supervivencia.** Solo entran caídas que se recuperaron. Una caída que nunca vuelve no aparece, y justo esas son las que harían ganar al que se cambió.
+
+`analysis/bootstrap_cost.py` compara dos reglas de pánico:
+
+- **piso**: la del proyecto. Cambio en el mínimo de cada caída de 15% o más que se recuperó.
+- **observable**: cambio la primera semana en que la pérdida desde el máximo cruza −15%, ejecutado una semana después, en *toda* caída que lo cruce, se recupere o no. Es lo que una persona puede hacer de verdad.
+
+Y las evalúa en 2.000 historias sintéticas de 24 años generadas con un **bootstrap estacionario** (Politis y Romano, 1994) sobre los retornos semanales reales de A y E. Se remuestrean *bloques* de semanas consecutivas, no semanas sueltas, para conservar lo que hace a una crisis una crisis: el agrupamiento de la volatilidad y la dinámica de caída y rebote. Los dos fondos se remuestrean con los mismos índices, para conservar su correlación. Como el largo del bloque es el parámetro delicado —bloques cortos rompen las recuperaciones en V, que son justamente el mecanismo del costo—, se reporta con tres largos distintos:
+
+| Bloque medio | Regla | Decisiones | Costo mediano | Salir costó | IC 90% del costo medio de una historia |
+|---|---|---:|---:|---:|---|
+| 13 semanas | piso | 5.158 | +16,4 pp | 95% | [+4,9; +30,1] pp |
+| 13 semanas | observable | 5.884 | +3,2 pp | 58% | [−18,4; +17,0] pp |
+| 26 semanas | piso | 5.366 | +17,8 pp | 97% | [+6,4; +33,1] pp |
+| 26 semanas | observable | 6.041 | +3,4 pp | 59% | [−20,4; +17,7] pp |
+| 52 semanas | piso | 5.525 | +21,3 pp | 98% | [+7,6; +35,5] pp |
+| 52 semanas | observable | 6.194 | +3,2 pp | 57% | [−26,4; +18,6] pp |
+
+![Distribución del costo según la regla](outputs/figures/bootstrap_reglas.png)
+
+El resultado no depende del largo del bloque. Y en la historia real, la regla observable incluso ganó en 2 de los 3 casos (GFC: −35,1 pp; 2021–23: −13,3 pp; COVID: +28,2 pp).
+
+La lectura honesta ya no es "cambiarse siempre cuesta", sino una **asimetría**: cambiarse tarde, cerca del piso, cuesta caro casi siempre; cambiarse temprano es una apuesta con resultados muy dispersos en las dos direcciones. Lo que esto no resuelve: el bootstrap solo recombina la historia observada, y si 2002–2026 no contiene cierto tipo de crisis, ninguna remuestra la va a producir.
+
+## Series de tiempo: ¿se puede anticipar una caída?
+
+Todo el argumento descansa en que "nadie sabe si la caída va a seguir". Hasta acá eso era un argumento; `analysis/time_series.py` lo somete a prueba formal.
+
+**Estacionariedad.** ADF y KPSS sobre el índice real del Fondo A. Se usan los dos porque sus hipótesis nulas son opuestas:
+
+| Serie | ADF (H0: raíz unitaria) | KPSS (H0: estacionaria) | Lectura |
+|---|---:|---:|---|
+| log del nivel | p = 0,355 | p ≤ 0,01 | raíz unitaria |
+| retornos | p < 0,001 | p ≥ 0,10 | estacionaria |
+
+Se modelan retornos, no precios.
+
+**Predictibilidad: ¿una caída anuncia más caída?**
+
+| Frecuencia | n | AR(1) | t (HAC) | p | Ljung-Box |
+|---|---:|---:|---:|---:|---|
+| diaria (hábil) | 6.263 | +0,218 | +10,13 | < 0,001 | p ≈ 0 (10 rezagos) |
+| **mensual** | 289 | +0,072 | +0,63 | **0,53** | p = 0,34 (12 rezagos) |
+
+La autocorrelación diaria es fuerte, pero es un artefacto conocido de los índices de fondos de pensiones: los activos extranjeros se valorizan con cierres de otros husos horarios y los ilíquidos con retraso. Un afiliado no puede aprovecharla, porque un traspaso se ejecuta días después, al valor cuota de una fecha que no conoce. A la frecuencia que corresponde a la decisión, la mensual, **los retornos no son predecibles**. Después de un mes de −5% o peor (10 casos), el retorno a 12 meses tiene media −1,8% pero mediana +4,8%, y fue positivo en el 60% de las veces, contra 72% incondicional. Con 10 meses que se solapan, la diferencia no alcanza para afirmar nada.
+
+**La volatilidad sí es predecible.** Ljung-Box sobre los retornos al cuadrado y ARCH-LM: p ≈ 0. Un GJR-GARCH(1,1) con errores t de Student da:
+
+| α | γ (asimetría) | β | ν | Persistencia | Vida media de un shock |
+|---:|---:|---:|---:|---:|---:|
+| 0,046 | **0,065** (t = 4,9) | 0,897 | 8,4 | 0,976 | **28 días hábiles** |
+
+γ significativo es el efecto apalancamiento: las caídas suben la volatilidad más que las subidas del mismo tamaño. Y una vida media de unas seis semanas significa que la tormenta de volatilidad pasa mucho antes de los 12 meses que alguien típicamente se queda afuera.
+
+**La trampa de esta sección: los fines de semana.** La primera corrida del GARCH dio ν clavado en 2,5 y persistencia exactamente 1,0000, idénticos con cuatro especificaciones distintas. Un parámetro que da el mismo valor en cuatro modelos no es un resultado: es el optimizador topando con una cota. La causa era que la Superintendencia publica valor cuota todos los días, y los sábados y domingos el fondo casi no se mueve, porque solo devenga el interés de la renta fija (desviación 43 veces menor que un día hábil). El modelo veía un patrón semanal fijo que no podía ajustar. Ahora los retornos diarios usan solo días hábiles, y el retorno de viernes a lunes incluye el devengo del fin de semana.
+
+**Régimen.** Un modelo Markov-switching de dos estados sobre retornos semanales identifica las crisis desde los datos, sin umbral a dedo:
+
+| Régimen | Media semanal | Volatilidad anual | Duración esperada |
+|---|---:|---:|---:|
+| calma | +0,23% | 8,0% | ~47 semanas |
+| turbulento | −0,33% | 20,0% | ~12 semanas |
+
+Fecha 14 episodios turbulentos, entre ellos mayo de 2006, la GFC, la crisis del euro de 2010 y 2011, el estallido social de 2019, COVID y 2021–22. Pero **"turbulento" no significa "cayendo"**: el modelo detecta volatilidad, no dirección, y dos de los 14 episodios fueron al alza (A +6,0% entre agosto y diciembre de 2020).
+
+![Volatilidad condicional y régimen](outputs/figures/volatilidad_regimen.png)
+
+**¿Se puede usar el régimen para salir a tiempo?** La regla: salir al E cuando la probabilidad de régimen turbulento cruza 0,5 y volver a las 52 semanas, sin contar dos veces el mismo episodio. La primera versión de este cálculo daba que salir *ganaba*, y no lo di por bueno hasta someterlo a dos correcciones. Primero, el rezago real de un traspaso. Segundo, la estimación fuera de muestra: aunque las probabilidades filtradas solo usan el pasado para filtrar, sus parámetros se habían estimado con la muestra completa, futuro incluido. La versión fuera de muestra reestima el modelo cada año, solo con los datos disponibles hasta ese momento.
+
+| Parámetros | Ejecución | Decisiones | Salir costó | La regla rinde | Quedarse en A rinde |
+|---|---|---:|---:|---:|---:|
+| conocen el futuro | inmediata | 11 | 45% | 6,38%/año | 4,08%/año |
+| conocen el futuro | 1 semana después | 11 | 45% | 5,51%/año | 4,08%/año |
+| fuera de muestra | inmediata | 12 | 58% | 4,46%/año | 4,08%/año |
+| **fuera de muestra** | **1 semana después** | 12 | **58%** | **3,85%/año** | **4,08%/año** |
+
+![La ventaja era información del futuro](outputs/figures/senal_sesgo_anticipacion.png)
+
+La ventaja aparente era casi entera **sesgo de anticipación**. Con 12 decisiones, la diferencia final contra quedarse no se distingue de cero. La conclusión correcta no es "la regla pierde", sino "no hay ventaja una vez que se le quita la información del futuro", y esa es la versión formal de "no es una estrategia que se pueda ocupar".
+
+## ¿El Fondo E es un refugio?
+
+Contra las caídas de la renta variable, sí. En las 12 tormentas del régimen turbulento en que cayó el Fondo A, el E protegió en 10: en la GFC, por ejemplo, el A perdió 15,6% real entre noviembre de 2007 y marzo de 2008 mientras el E ganaba 2,5%. Solo en dos cayeron los dos (junio a noviembre de 2022 y marzo-abril de 2024).
+
+Pero el E tiene su propio riesgo, el de tasas e inflación, y se materializa en otros años:
+
+![Retorno real anual del Fondo E](outputs/figures/fondo_e_anual.png)
+
+- **2021: −13,1% real** (−7,3% nominal con 6,6% de inflación), el mismo año en que el A ganó 13,0%.
+- **2026, hasta octubre: −10,5% real** (−7,5% nominal). Antes de creerlo verifiqué que no fuera un artefacto del índice: las siete AFP muestran entre −7,2% y −8,2% en el Fondo E, sin ningún día extremo. Es una caída gradual y sistémica. No conozco su causa y no la atribuyo.
+
+Cambiarse al E no es salir del riesgo. Es cambiar un riesgo por otro.
+
+## Lo que se puede afirmar, y lo que no
+
+**Se puede afirmar:**
+
+- Cambiarse al Fondo E en el piso de una caída cuesta caro casi siempre (97% de las historias sintéticas), y a un afiliado de 50 o 60 años le quita entre 13,1% y 18,5% de la pensión, de forma permanente.
+- Los retornos mensuales del Fondo A no son predecibles, y una estrategia basada en detectar turbulencia no tiene ventaja una vez que se le quita la información del futuro.
+- Medido en poder adquisitivo, el sistema tuvo una caída de 26% en 2021–23 que el análisis en pesos no registra.
+
+**No se puede afirmar:**
+
+- Que cambiarse temprano sea un error. Es una moneda al aire con un leve sesgo en contra (costó en el 59% de las historias), y en la historia real habría ganado dos de tres veces.
+- Que esto describa lo que la gente hizo de verdad. El volumen de traspasos de 2020 no se disparó en el piso (ver más abajo), así que el escenario "cambio en el piso" es una hipótesis sobre el comportamiento, no una observación.
+
 ## Calcula tu propio escenario
 
 `scripts/calculator.py` es una calculadora de línea de comandos interactiva: elegí una de las caídas reales detectadas arriba (o ingresá tus propias fechas), elegí a qué fondo te cambiarías en pánico y cuántos meses antes de volver, y calcula el costo histórico real contra los mismos datos que todo lo de arriba — no una regla general.
@@ -172,19 +368,28 @@ python etl/fetch_valor_cuota.py               # descarga los 5 archivos fuente r
 python etl/parse_valor_cuota.py               # -> data/processed/valor_cuota_long.parquet
 python etl/fetch_fichas.py                    # descarga 22 boletines mensuales reales (PDF)
 python etl/parse_traspasos.py                 # -> data/processed/traspasos_monthly.parquet
-python etl/build_duckdb.py                    # -> data/pension_funds.duckdb
+python etl/fetch_uf.py                        # descarga la UF diaria 2002-2026 (Banco Central vía mindicador.cl)
+python etl/parse_uf.py                        # limpia duplicados, huecos y el dólar colado -> uf_daily.parquet
+python etl/build_duckdb.py                    # -> data/pension_funds.duckdb (incluye fund_index_real, en UF)
 python analysis/panic_switch_cost.py          # -> reports/panic_switch_results.csv
 python analysis/systematic_panic_switch_cost.py  # -> reports/systematic_panic_switch_results.csv + summary.json
 python analysis/timing_grid.py                # -> reports/timing_grid.csv
-python scripts/make_charts.py                 # -> outputs/figures/*.png
+python analysis/pension_loss.py               # -> reports/pension_loss.csv (pérdida en la pensión, por edad)
+python analysis/time_series.py                # -> reports/time_series_summary.json + ts_*.csv (~30 s)
+python analysis/bootstrap_cost.py             # -> reports/bootstrap_cost.json (2.000 historias x 3 bloques, ~15 s)
+python scripts/make_charts.py                 # -> outputs/figures/*.png (11 figuras)
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (no commiteado, ver arriba)
 python scripts/calculator.py                  # interactivo: tu propio escenario de cambio en pánico
-pytest tests/ -v                              # 29 tests, sin necesidad de red (fixtures sintéticas)
+pytest tests/ -v                              # 56 tests, sin necesidad de red (fixtures sintéticas)
 ```
 
 ## Próximos pasos
 
-La ventana de 22 boletines cubre COVID y 2022 pero no la GFC de 2008 (la serie de boletines solo empieza en dic. 2012) — el hallazgo del lado de los precios sobre la GFC arriba no tiene una contraparte de comportamiento con la cual verificarse. Un seguimiento lógico: extender la serie de volumen de traspasos más atrás, y desagregarla por fondo de origen/destino (`Tabla N° 5`, todavía no extraída) para ver si la plata que sí se movió en 2020 fue hacia donde la historia del pánico predeciría — hacia el Fondo E — o hacia otro lado completamente distinto.
+- **Mujeres.** El modelo de pensión es para un hombre. Para una mujer el corte del Fondo A es a los 51 y la edad legal de jubilación, 60: menos años para diluir una pérdida, así que el costo debería ser mayor a la misma edad.
+- **Renta vitalicia de verdad.** Reemplazar la anualidad cierta por una con tablas de mortalidad (RV-2020, CB-2014) y la tasa de venta vigente de cada año.
+- **Lagunas de cotización.** No cambian el porcentaje perdido si son uniformes, pero sí si se concentran: quien pierde el empleo en una crisis deja de cotizar justo cuando las cuotas están baratas.
+- **El régimen, todo fuera de muestra.** La estrategia de señal ya se evalúa fuera de muestra, pero el fechado de episodios usa la muestra completa.
+- **El comportamiento por fondo.** La ventana de 22 boletines cubre COVID y 2022 pero no la GFC de 2008 (la serie de boletines empieza en dic. 2012). Un seguimiento lógico: extender la serie de traspasos y desagregarla por fondo de origen y destino (`Tabla N° 5`, todavía no extraída) para ver si la plata que sí se movió en 2020 fue hacia donde predice la historia del pánico —el Fondo E— o hacia otro lado.
 
 ## Autor
 
