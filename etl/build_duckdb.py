@@ -16,6 +16,7 @@ import duckdb
 ROOT = Path(__file__).resolve().parents[1]
 PARQUET_PATH = ROOT / "data" / "processed" / "valor_cuota_long.parquet"
 TRASPASOS_PARQUET_PATH = ROOT / "data" / "processed" / "traspasos_monthly.parquet"
+UF_PARQUET_PATH = ROOT / "data" / "processed" / "uf_daily.parquet"
 DB_PATH = ROOT / "data" / "pension_funds.duckdb"
 
 
@@ -74,6 +75,46 @@ def main() -> None:
         ORDER BY fondo, fecha
         """
     )
+
+    # Real (UF-denominated) index. The nominal index carries Chilean inflation
+    # inside every return; that cancels when comparing two funds over the same
+    # days, but not when returns are mixed with salaries or pensions. Dividing by
+    # the UF and rebasing to 100 gives the same index in constant purchasing power.
+    if UF_PARQUET_PATH.exists():
+        con.execute(
+            f"""
+            CREATE OR REPLACE TABLE uf_daily AS
+            SELECT fecha, uf FROM read_parquet('{UF_PARQUET_PATH.as_posix()}')
+            ORDER BY fecha
+            """
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE fund_index_real AS
+            WITH deflated AS (
+                SELECT f.fondo, f.fecha, f.index_value / u.uf AS raw
+                FROM fund_index f
+                JOIN uf_daily u USING (fecha)
+            )
+            SELECT
+                fondo,
+                fecha,
+                100.0 * raw / first_value(raw) OVER (
+                    PARTITION BY fondo ORDER BY fecha
+                ) AS index_value
+            FROM deflated
+            ORDER BY fondo, fecha
+            """
+        )
+        missing = con.execute(
+            """
+            SELECT count(*) FROM fund_index f
+            LEFT JOIN uf_daily u USING (fecha) WHERE u.uf IS NULL
+            """
+        ).fetchone()[0]
+        if missing:
+            raise ValueError(f"{missing} fund_index days have no UF value")
+        print("fund_index_real: indice deflactado por UF, sin dias faltantes")
 
     if TRASPASOS_PARQUET_PATH.exists():
         con.execute(
