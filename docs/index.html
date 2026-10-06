@@ -8,17 +8,17 @@
 <style>
   :root {
     --bg: #FBFAF8; --surface: #FFFFFF; --ink: #23201D; --muted: #6B645D;
-    --line: #E3DED7; --cost: #B5553D; --stay: #4C7A3E; --gold: #B58900;
+    --line: #E3DED7; --accent: #1F5A96; --stay: #4C7A3E; --gold: #B58900;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #171614; --surface: #201E1B; --ink: #EDE9E3; --muted: #A9A29A;
-      --line: #322E2A; --cost: #D9765C; --stay: #7FAE6B; --gold: #D9AC3A;
+      --line: #322E2A; --accent: #6FA8DC; --stay: #7FAE6B; --gold: #D9AC3A;
     }
   }
   :root[data-theme="dark"] {
     --bg: #171614; --surface: #201E1B; --ink: #EDE9E3; --muted: #A9A29A;
-    --line: #322E2A; --cost: #D9765C; --stay: #7FAE6B; --gold: #D9AC3A;
+    --line: #322E2A; --accent: #6FA8DC; --stay: #7FAE6B; --gold: #D9AC3A;
   }
   * { box-sizing: border-box; }
   body {
@@ -36,15 +36,15 @@
     border: 1px solid var(--line); border-radius: 7px; text-decoration: none;
     color: var(--ink); background: var(--surface); font-size: .9rem; transition: border-color .15s;
   }
-  .links a:hover { border-color: var(--cost); }
+  .links a:hover { border-color: var(--accent); }
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 32px 0; }
   .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
   .kpi .n { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
   .kpi .l { font-size: .82rem; color: var(--muted); margin-top: 5px; }
-  .kpi.cost .n { color: var(--cost); }
+  .kpi.cost .n { color: var(--accent); }
   .kpi.stay .n { color: var(--stay); }
   h2 { font-size: 1.4rem; margin: 54px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); letter-spacing: -0.01em; }
-  h2 .num { color: var(--cost); margin-right: 8px; font-variant-numeric: tabular-nums; }
+  h2 .num { color: var(--accent); margin-right: 8px; font-variant-numeric: tabular-nums; }
   p { margin: 0 0 16px; max-width: 70ch; }
   figure { margin: 26px 0; }
   figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
@@ -55,9 +55,9 @@
   th:first-child, td:first-child { text-align: left; }
   thead th { color: var(--muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
   .neg { color: var(--stay); font-weight: 700; }
-  .pos { color: var(--cost); font-weight: 700; }
+  .pos { color: var(--accent); font-weight: 700; }
   .callout {
-    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--cost);
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
     border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 26px 0;
   }
   .callout.warn { border-left-color: var(--gold); }
@@ -68,7 +68,7 @@
   pre code { background: none; border: 0; padding: 0; }
   ul { max-width: 70ch; padding-left: 22px; } li { margin-bottom: 9px; }
   footer { margin-top: 68px; padding-top: 24px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--muted); }
-  a { color: var(--cost); }
+  a { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -84,7 +84,7 @@
   </p>
   <div class="links">
     <a href="https://github.com/Rxyxs/chile-pension-fund-switching-cost">Código y metodología</a>
-    <a href="https://www.spensiones.cl/apps/valoresCuotaFondo/">Fuente de los datos</a>
+    <a href="https://www.spensiones.cl/apps/valoresCuotaFondo/vcfAFP.php">Fuente de los datos</a>
   </div>
 </header>
 
