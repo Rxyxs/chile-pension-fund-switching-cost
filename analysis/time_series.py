@@ -48,7 +48,6 @@ sys.path.insert(0, str(ROOT))
 DB_PATH = ROOT / "data" / "pension_funds.duckdb"
 REPORTS_DIR = ROOT / "reports"
 
-DIAS_HABILES_ANIO = 252
 
 
 def cargar_indice_real(con: duckdb.DuckDBPyConnection, fondo: str) -> pd.Series:
@@ -219,18 +218,20 @@ def ajustar_gjr_garch(indice: pd.Series):
     # mitad, que es la traducción operativa de "cuánto dura la tormenta".
     persistencia = p["alpha[1]"] + p["beta[1]"] + p["gamma[1]"] / 2
     vida_media = np.log(0.5) / np.log(persistencia) if persistencia < 1 else np.inf
+    # Días hábiles por año medidos en la serie (~261, porque incluye feriados),
+    # no 252 fijos: es la misma convención que usa kpis.py.
+    dias_por_anio = len(r) / ((r.index[-1] - r.index[0]).days / 365.25)
     resumen = {
         "omega": float(p["omega"]), "alpha": float(p["alpha[1]"]),
         "gamma": float(p["gamma[1]"]), "beta": float(p["beta[1]"]),
         "nu": float(p["nu"]),
         "persistencia": float(persistencia),
         "vida_media_dias_habiles": float(vida_media),
-        "vol_anual_media_pct": float(res.conditional_volatility.mean()
-                                     * np.sqrt(DIAS_HABILES_ANIO)),
+        "vol_anual_media_pct": float(res.conditional_volatility.mean() * np.sqrt(dias_por_anio)),
         "loglik": float(res.loglikelihood),
         "t_gamma": float(res.tvalues["gamma[1]"]),
     }
-    vol = (res.conditional_volatility * np.sqrt(DIAS_HABILES_ANIO)).rename("vol_anual_pct")
+    vol = (res.conditional_volatility * np.sqrt(dias_por_anio)).rename("vol_anual_pct")
     return resumen, vol
 
 
