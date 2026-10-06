@@ -1,0 +1,349 @@
+{
+  "estacionariedad": {
+    "log_nivel": {
+      "adf_stat": -1.8523242143049738,
+      "adf_p": 0.35481066606638634,
+      "kpss_stat": 13.21439293699518,
+      "kpss_p": 0.01
+    },
+    "retorno": {
+      "adf_stat": -25.126018548947382,
+      "adf_p": 0.0,
+      "kpss_stat": 0.09324181179072764,
+      "kpss_p": 0.1
+    }
+  },
+  "predictibilidad": {
+    "diario": {
+      "n": 6263,
+      "acf": [
+        0.21807271115120366,
+        0.043167855220329704,
+        -0.0053379078740364225,
+        6.852009324601697e-08,
+        -0.004801707735713769,
+        -0.01814305649625771,
+        0.0010178430971208591,
+        -0.010729718673595111,
+        0.03539857219537741,
+        0.009555376194487352
+      ],
+      "ljung_box_rezagos": 10,
+      "ljung_box_stat": 321.21314840527765,
+      "ljung_box_p": 5.048664508139868e-63,
+      "ar1_coef": 0.21807285372605556,
+      "ar1_t_hac": 10.134266601456455,
+      "ar1_p_hac": 3.8928372674862615e-24,
+      "ar1_r2": 0.04756106928809967
+    },
+    "mensual": {
+      "n": 289,
+      "acf": [
+        0.07180512664535844,
+        0.09054602025770062,
+        0.04681820383500896,
+        0.019316482982174518,
+        -0.06463278168825366,
+        -0.05561479918852362,
+        0.07351418876272443,
+        -0.08060957405357708,
+        0.05890612567979273,
+        -0.02104054561464287,
+        -0.04584488577384749,
+        -0.06364175488475861
+      ],
+      "ljung_box_rezagos": 12,
+      "ljung_box_stat": 13.41640684570942,
+      "ljung_box_p": 0.33951453611662114,
+      "ar1_coef": 0.07180777269163771,
+      "ar1_t_hac": 0.6308733438025578,
+      "ar1_p_hac": 0.5281233423527384,
+      "ar1_r2": 0.0051595920780674875
+    }
+  },
+  "retorno_futuro_tras_caida": {
+    "umbral_pct": -5.0,
+    "horizonte_meses": 12,
+    "n_meses_con_caida": 10,
+    "futuro_medio_tras_caida": -1.761706933776121,
+    "futuro_mediano_tras_caida": 4.772109569744609,
+    "pct_positivo_tras_caida": 60.0,
+    "futuro_medio_incondicional": 5.4642842194549415,
+    "pct_positivo_incondicional": 71.84115523465704
+  },
+  "clustering": {
+    "ljung_box_cuadrados_stat": 5394.993348804263,
+    "ljung_box_cuadrados_p": 0.0,
+    "arch_lm_stat": 1840.3046282544105,
+    "arch_lm_p": 0.0
+  },
+  "gjr_garch": {
+    "omega": 0.007581740270525665,
+    "alpha": 0.045988608489860194,
+    "gamma": 0.06537396513409419,
+    "beta": 0.897065458508066,
+    "nu": 8.438936068154351,
+    "persistencia": 0.9757410495649732,
+    "vida_media_dias_habiles": 28.224850831119078,
+    "vol_anual_media_pct": 8.932707366150108,
+    "loglik": -4831.737017467438,
+    "t_gamma": 4.853643252759753
+  },
+  "regimenes": {
+    "loglik": -2222.6775152842147,
+    "media_semanal_calma_pct": 0.22842276379919152,
+    "media_semanal_turbulento_pct": -0.3322415144564286,
+    "vol_anual_calma_pct": 8.025329832592949,
+    "vol_anual_turbulento_pct": 20.037690315008312,
+    "duracion_esperada_calma_semanas": 46.53220547487808,
+    "duracion_esperada_turbulento_semanas": 12.347498332271744,
+    "pct_semanas_turbulento": 19.089456869009584
+  },
+  "episodios_turbulentos": [
+    [
+      "2006-05-19",
+      "2006-07-07",
+      7
+    ],
+    [
+      "2007-08-03",
+      "2007-09-07",
+      5
+    ],
+    [
+      "2007-11-02",
+      "2008-03-28",
+      21
+    ],
+    [
+      "2008-06-27",
+      "2009-11-06",
+      71
+    ],
+    [
+      "2010-04-30",
+      "2010-07-23",
+      12
+    ],
+    [
+      "2011-07-15",
+      "2011-12-23",
+      23
+    ],
+    [
+      "2019-11-15",
+      "2019-12-13",
+      4
+    ],
+    [
+      "2020-02-21",
+      "2020-06-26",
+      18
+    ],
+    [
+      "2020-08-07",
+      "2020-12-04",
+      17
+    ],
+    [
+      "2021-01-01",
+      "2021-01-29",
+      4
+    ],
+    [
+      "2021-11-12",
+      "2022-03-18",
+      18
+    ],
+    [
+      "2022-06-17",
+      "2022-11-04",
+      20
+    ],
+    [
+      "2023-10-13",
+      "2023-11-10",
+      4
+    ],
+    [
+      "2024-03-01",
+      "2024-04-26",
+      8
+    ]
+  ],
+  "estrategia_senal": {
+    "parámetros con muestra completa, sin rezago": {
+      "desde": "2006-10-06",
+      "hasta": "2026-10-02",
+      "n_decisiones": 11,
+      "costo_medio_pp": -3.9278208662263627,
+      "costo_mediano_pp": -5.239934789394485,
+      "pct_decisiones_donde_salir_costo": 45.45454545454545,
+      "pct_tiempo_en_e": 54.78927203065134,
+      "retorno_anual_regla_pct": 6.3798699544129756,
+      "retorno_anual_siempre_a_pct": 4.076958243793083,
+      "retorno_anual_siempre_e_pct": 2.417483841641821
+    },
+    "parámetros con muestra completa, 1 sem rezago": {
+      "desde": "2006-10-06",
+      "hasta": "2026-10-02",
+      "n_decisiones": 11,
+      "costo_medio_pp": -2.403617392577345,
+      "costo_mediano_pp": -3.5285520196361997,
+      "pct_decisiones_donde_salir_costo": 45.45454545454545,
+      "pct_tiempo_en_e": 54.78927203065134,
+      "retorno_anual_regla_pct": 5.505267056252827,
+      "retorno_anual_siempre_a_pct": 4.076958243793083,
+      "retorno_anual_siempre_e_pct": 2.417483841641821
+    },
+    "fuera de muestra, sin rezago": {
+      "desde": "2006-10-06",
+      "hasta": "2026-10-02",
+      "n_decisiones": 12,
+      "costo_medio_pp": 0.04272915799663187,
+      "costo_mediano_pp": 1.8061031559857166,
+      "pct_decisiones_donde_salir_costo": 58.333333333333336,
+      "pct_tiempo_en_e": 59.77011494252874,
+      "retorno_anual_regla_pct": 4.463136967597858,
+      "retorno_anual_siempre_a_pct": 4.076958243793083,
+      "retorno_anual_siempre_e_pct": 2.417483841641821
+    },
+    "fuera de muestra, 1 sem rezago  <- la real": {
+      "desde": "2006-10-06",
+      "hasta": "2026-10-02",
+      "n_decisiones": 12,
+      "costo_medio_pp": 0.8927652050450557,
+      "costo_mediano_pp": 3.8795282462115277,
+      "pct_decisiones_donde_salir_costo": 58.333333333333336,
+      "pct_tiempo_en_e": 59.77011494252874,
+      "retorno_anual_regla_pct": 3.8545747029804955,
+      "retorno_anual_siempre_a_pct": 4.076958243793083,
+      "retorno_anual_siempre_e_pct": 2.417483841641821
+    }
+  },
+  "refugio_en_episodios": [
+    {
+      "inicio": "2006-05-19",
+      "fin": "2006-07-07",
+      "semanas": 7,
+      "a_pct": -3.0478362306485263,
+      "e_pct": 0.24432620323551202,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2007-08-03",
+      "fin": "2007-09-07",
+      "semanas": 5,
+      "a_pct": -0.9966838009258461,
+      "e_pct": 0.446620291337263,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2007-11-02",
+      "fin": "2008-03-28",
+      "semanas": 21,
+      "a_pct": -15.566963630399433,
+      "e_pct": 2.528748876939524,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2008-06-27",
+      "fin": "2009-11-06",
+      "semanas": 71,
+      "a_pct": -11.819950875136131,
+      "e_pct": 7.329800956778421,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2010-04-30",
+      "fin": "2010-07-23",
+      "semanas": 12,
+      "a_pct": -1.6794374341352114,
+      "e_pct": 1.249229936022922,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2011-07-15",
+      "fin": "2011-12-23",
+      "semanas": 23,
+      "a_pct": -9.183553005159395,
+      "e_pct": 2.4015620594481923,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2019-11-15",
+      "fin": "2019-12-13",
+      "semanas": 4,
+      "a_pct": -0.5026178955681249,
+      "e_pct": 4.66338019183854,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2020-02-21",
+      "fin": "2020-06-26",
+      "semanas": 18,
+      "a_pct": -10.336547820747,
+      "e_pct": 5.77765071401366,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2020-08-07",
+      "fin": "2020-12-04",
+      "semanas": 17,
+      "a_pct": 6.0023792812144094,
+      "e_pct": -0.9508272399038731,
+      "lectura": "turbulento al alza: no había de qué protegerse"
+    },
+    {
+      "inicio": "2021-01-01",
+      "fin": "2021-01-29",
+      "semanas": 4,
+      "a_pct": 5.42516132244435,
+      "e_pct": 1.7082476583084816,
+      "lectura": "turbulento al alza: no había de qué protegerse"
+    },
+    {
+      "inicio": "2021-11-12",
+      "fin": "2022-03-18",
+      "semanas": 18,
+      "a_pct": -11.25414774595328,
+      "e_pct": 3.4983735934498217,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2022-06-17",
+      "fin": "2022-11-04",
+      "semanas": 20,
+      "a_pct": -0.7986345746427093,
+      "e_pct": -2.3715546640074803,
+      "lectura": "cayeron los dos"
+    },
+    {
+      "inicio": "2023-10-13",
+      "fin": "2023-11-10",
+      "semanas": 4,
+      "a_pct": -3.4394329116974376,
+      "e_pct": 0.07047521368719334,
+      "lectura": "el E protegió"
+    },
+    {
+      "inicio": "2024-03-01",
+      "fin": "2024-04-26",
+      "semanas": 8,
+      "a_pct": -3.6942377551990147,
+      "e_pct": -3.387400191967005,
+      "lectura": "cayeron los dos"
+    }
+  ],
+  "corr_a_e": {
+    "media": 0.1662355545209698,
+    "min": -0.4282209694768587,
+    "max": 0.5749041331096393,
+    "fecha_max": "2005-10-05"
+  },
+  "peores_anios_e": {
+    "2021": -13.057279221426176,
+    "2026": -10.490483470798196,
+    "2023": -1.314446312169415
+  }
+}
