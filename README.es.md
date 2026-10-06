@@ -445,7 +445,7 @@ python analysis/kpis.py                       # -> reports/kpis.json + kpis_*.cs
 python scripts/make_charts.py                 # -> outputs/figures/*.png (13 figuras)
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (no commiteado, ver arriba)
 python scripts/calculator.py                  # interactivo: tu propio escenario de cambio en pánico
-pytest tests/ -v                              # 65 tests, sin necesidad de red (fixtures sintéticas)
+pytest tests/ -v                              # 69 tests, sin necesidad de red (fixtures sintéticas)
 ```
 
 ## Próximos pasos

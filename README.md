@@ -443,7 +443,7 @@ python analysis/kpis.py                    # -> reports/kpis.json + kpis_*.csv (
 python scripts/make_charts.py              # -> outputs/figures/*.png (13 figures)
 python scripts/make_interactive_dashboard.py  # -> outputs/interactive/*.html (not committed, see above)
 python scripts/calculator.py               # interactive: your own panic-switch scenario
-pytest tests/ -v                           # 65 tests, no network needed (synthetic fixtures)
+pytest tests/ -v                           # 69 tests, no network needed (synthetic fixtures)
 ```
 
 ## Next steps
