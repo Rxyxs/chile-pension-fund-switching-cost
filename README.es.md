@@ -1,4 +1,4 @@
-[ 🇺🇸 [Read in English](README.md) ] | [ 🇨🇱 Español ]
+[ [Read in English](README.md) ] | [ Español ]
 
 [![tests](https://github.com/Rxyxs/chile-pension-fund-switching-cost/actions/workflows/tests.yml/badge.svg)](https://github.com/Rxyxs/chile-pension-fund-switching-cost/actions/workflows/tests.yml)
 
